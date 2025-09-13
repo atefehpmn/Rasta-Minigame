@@ -2,189 +2,330 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Gated Latch Builder</title>
+<title>Gated Latch with CircuitVerse-like Visuals</title>
 <style>
-  body { background:#f9f9f9; font-family:sans-serif; text-align:center; }
+  body { background:#f0f0f0; font-family:sans-serif; }
   #workspace {
-    width:1000px; height:550px; border:2px dashed #555;
-    margin:20px auto; position:relative; background:white;
+    width:1000px; height:600px;
+    margin:20px auto; position:relative;
+    background:#fff; border:1px solid #999;
+  }
+  svg#gates {
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    pointer-events:none;
   }
   .component {
-    width:120px; height:80px; background:#ddd; border:2px solid #333;
-    position:absolute; cursor:move; border-radius:8px;
-    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    position:absolute;
+    cursor:move;
     user-select:none;
   }
   .port {
-    width:14px; height:14px; border-radius:50%;
-    position:absolute; cursor:crosshair; border:1px solid black;
+    width:12px; height:12px;
+    border-radius:50%;
     background:#888;
+    position:absolute;
+    cursor:pointer;
+    border:1px solid #333;
   }
-  .on { background:#0f0 !important; }
-  .off { background:#aaa !important; }
-  .output { right:-10px; top:50%; transform:translateY(-50%); }
-  .input { left:-10px; }
-  #message { margin-top:15px; font-size:20px; font-weight:bold; }
-  svg { position:absolute; top:0; left:0; width:100%; height:100%; }
-  line { stroke:black; stroke-width:2; cursor:pointer; }
-  .val { font-weight:bold; }
+  .on { background:#0a0; }
+  .off { background:#888; }
+  .label {
+    text-align:center;
+    font-size:14px;
+    user-select:none;
+  }
 </style>
 </head>
 <body>
-<h2>Build and Test the Gated Latch</h2>
 
+<h2 style="text-align:center">Gated Latch Builder (Styled)</h2>
 <div id="workspace">
-  <svg id="wires"></svg>
+  <svg id="wires" style="position:absolute; top:0; left:0; width:100%; height:100%;"></svg>
+  <svg id="gates"></svg>
 
-  <div class="component inputComp" id="data" style="top:50px;left:20px;">
-    Data <span id="data_val" class="val">(0)</span>
-    <div class="output port off" data-id="data"></div>
+  <!-- Inputs -->
+  <div class="component inputComp" id="data" style="top:50px; left:20px; width:80px; height:40px;">
+    <div class="label">DATA (<span id="data_val">0</span>)</div>
+    <div class="port output off" data-id="data" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
   </div>
-  <div class="component inputComp" id="enable" style="top:150px;left:20px;">
-    Enable <span id="enable_val" class="val">(0)</span>
-    <div class="output port off" data-id="enable"></div>
-  </div>
-
-  <div class="component" id="and1" style="top:100px;left:250px;">
-    AND
-    <div class="input port off" style="top:20%;" data-id="and1_in1"></div>
-    <div class="input port off" style="top:70%;" data-id="and1_in2"></div>
-    <div class="output port off" data-id="and1_out"></div>
+  <div class="component inputComp" id="enable" style="top:120px; left:20px; width:80px; height:40px;">
+    <div class="label">ENABLE (<span id="enable_val">0</span>)</div>
+    <div class="port output off" data-id="enable" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
   </div>
 
-  <div class="component" id="not1" style="top:250px;left:250px;">
-    NOT
-    <div class="input port off" style="top:50%;" data-id="not1_in"></div>
-    <div class="output port off" data-id="not1_out"></div>
+  <!-- AND gate 1 -->
+  <div class="component gate" id="and1" style="top:80px; left:200px; width:80px; height:60px;">
+    <canvas class="gateCanvas" width="80" height="60"></canvas>
+    <div class="port input off" data-id="and1_in1" style="left:-6px; top:20%; transform:translateY(-50%);"></div>
+    <div class="port input off" data-id="and1_in2" style="left:-6px; top:80%; transform:translateY(-50%);"></div>
+    <div class="port output off" data-id="and1_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
   </div>
 
-  <div class="component" id="and2" style="top:250px;left:450px;">
-    AND
-    <div class="input port off" style="top:20%;" data-id="and2_in1"></div>
-    <div class="input port off" style="top:70%;" data-id="and2_in2"></div>
-    <div class="output port off" data-id="and2_out"></div>
+  <!-- NOT gate -->
+  <div class="component gate" id="not1" style="top:200px; left:200px; width:80px; height:60px;">
+    <canvas class="gateCanvas" width="80" height="60"></canvas>
+    <div class="port input off" data-id="not1_in" style="left:-6px; top:50%; transform:translateY(-50%);"></div>
+    <div class="port output off" data-id="not1_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
   </div>
 
-  <div class="component" id="latch" style="top:150px;left:650px;">
-    Latch
-    <div class="input port off" style="top:30%;" data-id="latch_in1"></div>
-    <div class="input port off" style="top:70%;" data-id="latch_in2"></div>
-    <div class="output port off" data-id="latch_out"></div>
+  <!-- AND gate 2 -->
+  <div class="component gate" id="and2" style="top:200px; left:400px; width:80px; height:60px;">
+    <canvas class="gateCanvas" width="80" height="60"></canvas>
+    <div class="port input off" data-id="and2_in1" style="left:-6px; top:20%; transform:translateY(-50%);"></div>
+    <div class="port input off" data-id="and2_in2" style="left:-6px; top:80%; transform:translateY(-50%);"></div>
+    <div class="port output off" data-id="and2_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
   </div>
 
-  <div class="component" id="display" style="top:200px;left:850px;">
-    Output <span id="out_val" class="val">(0)</span>
-    <div class="input port off" style="top:50%;" data-id="disp_in"></div>
+  <!-- Latch -->
+  <div class="component gate" id="latch" style="top:120px; left:600px; width:100px; height:80px;">
+    <canvas class="gateCanvas" width="100" height="80"></canvas>
+    <div class="port input off" data-id="latch_in1" style="left:-6px; top:30%; transform:translateY(-50%);"></div>
+    <div class="port input off" data-id="latch_in2" style="left:-6px; top:70%; transform:translateY(-50%);"></div>
+    <div class="port output off" data-id="latch_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
   </div>
+
+  <!-- Display/output block -->
+  <div class="component" id="display" style="top:200px; left:800px; width:80px; height:40px;">
+    <div class="label">OUTPUT (<span id="out_val">0</span>)</div>
+    <div class="port input off" data-id="disp_in" style="left:-6px; top:50%; transform:translateY(-50%);"></div>
+  </div>
+
 </div>
 
-<div id="message"></div>
-
 <script>
-  const wires = document.getElementById("wires");
-  let connections = [];
-  let tempLine=null, startPort=null;
+// Helper to draw Gate shapes on canvas
+function drawAND(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = "#ddd";
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 2;
+  // rectangle left half
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(w/2,0);
+  ctx.lineTo(w/2,h);
+  ctx.lineTo(0,h);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // half-circle right
+  ctx.beginPath();
+  ctx.moveTo(w/2,0);
+  ctx.arc(w/2, h/2, h/2, -Math.PI/2, Math.PI/2);
+  ctx.lineTo(w/2, h);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+}
 
-  let values={data:0,enable:0,and1_out:0,not1_out:0,and2_out:0,latch_out:0,disp_in:0};
-  let latchQ=0;
+function drawNOT(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = "#ddd";
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth =2;
+  // triangle
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(w*0.8, h/2);
+  ctx.lineTo(0,h);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // circle at output
+  ctx.beginPath();
+  ctx.arc(w*0.85, h/2, 5, 0, 2*Math.PI);
+  ctx.fill(); ctx.stroke();
+}
 
-  // Draggable components
-  let selected=null, offsetX=0, offsetY=0;
-  document.querySelectorAll('.component').forEach(c=>{
-    c.onmousedown=e=>{
-      if(e.target.classList.contains("port")) return;
-      selected=c; offsetX=e.offsetX; offsetY=e.offsetY;
-    };
+// Initialize drawing
+document.querySelectorAll('.gate').forEach(g=>{
+  const canv = g.querySelector('.gateCanvas');
+  const ctx = canv.getContext('2d');
+  if(g.id.startsWith('and')) drawAND(ctx, canv.width, canv.height);
+  else if(g.id==='latch'){
+    // approximate latch block: rectangle with two inputs, one output
+    ctx.fillStyle = "#ddd";
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth=2;
+    ctx.fillRect(0,0,canv.width,canv.height);
+    ctx.strokeRect(0,0,canv.width,canv.height);
+    ctx.fillStyle = "#000";
+    ctx.font = "16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Latch", canv.width/2, canv.height/2);
+  }
+  else if(g.id==='not1') drawNOT(ctx, canv.width, canv.height);
+});
+
+// State & Logic
+let values = { data:0, enable:0, and1_out:0, not1_out:0, and2_out:0, latch_out:0, disp_in:0 };
+let latchQ = 0;
+let connections = [];
+let tempLine = null, startPort = null;
+
+// Utility to find port element by data-id
+function portElem(id){
+  return document.querySelector(`[data-id='${id}']`);
+}
+
+// Draggable
+let selected = null, offsetX=0, offsetY=0;
+const workspace = document.getElementById('workspace');
+document.querySelectorAll('.component').forEach(c=>{
+  c.addEventListener('mousedown', e=>{
+    if(e.target.classList.contains('port')) return;
+    selected = c;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
   });
-  document.onmousemove=e=>{
-    if(selected){
-      selected.style.left=(e.pageX-offsetX-workspace.offsetLeft)+"px";
-      selected.style.top=(e.pageY-offsetY-workspace.offsetTop)+"px";
-      redrawWires();
+});
+document.addEventListener('mousemove', e=>{
+  if(selected){
+    selected.style.left = (e.pageX - offsetX - workspace.getBoundingClientRect().left) + 'px';
+    selected.style.top  = (e.pageY - offsetY - workspace.getBoundingClientRect().top) + 'px';
+    redrawWires();
+  }
+  if(tempLine){
+    tempLine.setAttribute('x2', e.pageX - workspace.getBoundingClientRect().left);
+    tempLine.setAttribute('y2', e.pageY - workspace.getBoundingClientRect().top);
+  }
+});
+document.addEventListener('mouseup', e=>{
+  selected = null;
+});
+
+// Input toggle
+document.querySelectorAll('.inputComp').forEach(ic=>{
+  ic.addEventListener('click', e=>{
+    if(e.target.classList.contains('port')) return;
+    const id = ic.id;
+    values[id] = values[id] ? 0 : 1;
+    document.getElementById(id+"_val").textContent = values[id];
+    updateLogic();
+  });
+});
+
+// Wire creation by drag
+document.querySelectorAll('.port').forEach(p=>{
+  p.addEventListener('mousedown', e=>{
+    e.stopPropagation();
+    startPort = p;
+    const ws = workspace.getBoundingClientRect();
+    const pr = p.getBoundingClientRect();
+    const x = pr.left + pr.width/2 - ws.left;
+    const y = pr.top + pr.height/2 - ws.top;
+    tempLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    tempLine.setAttribute('x1', x);
+    tempLine.setAttribute('y1', y);
+    tempLine.setAttribute('x2', x);
+    tempLine.setAttribute('y2', y);
+    tempLine.setAttribute('stroke','orange');
+    tempLine.setAttribute('stroke-dasharray','4');
+    wires.appendChild(tempLine);
+  });
+  p.addEventListener('mouseup', e=>{
+    if(startPort && startPort!==p){
+      connections.push([startPort.dataset.id, p.dataset.id]);
     }
     if(tempLine){
-      tempLine.setAttribute("x2", e.pageX - workspace.getBoundingClientRect().left);
-      tempLine.setAttribute("y2", e.pageY - workspace.getBoundingClientRect().top);
+      wires.removeChild(tempLine);
+      tempLine = null;
     }
-  };
-  document.onmouseup=()=>{selected=null};
-
-  // Toggle inputs
-  document.querySelectorAll('.inputComp').forEach(comp=>{
-    comp.onclick=()=>{
-      const id=comp.id;
-      values[id]=values[id]?0:1;
-      document.getElementById(id+"_val").textContent="("+values[id]+")";
-      updateLogic();
-    };
+    startPort = null;
+    redrawWires();
+    updateLogic();
   });
+});
 
-  // Wire drawing (dragging)
-  document.querySelectorAll('.port').forEach(p=>{
-    p.onmousedown=(e)=>{
-      e.stopPropagation();
-      startPort=p;
-      const ws=workspace.getBoundingClientRect();
-      const r=p.getBoundingClientRect();
-      const x=r.left+r.width/2-ws.left, y=r.top+r.height/2-ws.top;
-      tempLine=document.createElementNS("http://www.w3.org/2000/svg","line");
-      tempLine.setAttribute("x1",x); tempLine.setAttribute("y1",y);
-      tempLine.setAttribute("x2",x); tempLine.setAttribute("y2",y);
-      tempLine.setAttribute("stroke","red"); tempLine.setAttribute("stroke-dasharray","4");
-      wires.appendChild(tempLine);
-    };
-    p.onmouseup=(e)=>{
-      if(startPort&&startPort!==p){
-        connections.push([startPort.dataset.id,p.dataset.id]);
+// Delete wire on click
+function redrawWires(){
+  wires.innerHTML = '';
+  connections.forEach((c,i)=>{
+    const p1 = portElem(c[0]);
+    const p2 = portElem(c[1]);
+    if(p1 && p2){
+      const r1 = p1.getBoundingClientRect();
+      const r2 = p2.getBoundingClientRect();
+      const ws = workspace.getBoundingClientRect();
+      const x1 = r1.left + r1.width/2 - ws.left;
+      const y1 = r1.top + r1.height/2 - ws.top;
+      const x2 = r2.left + r2.width/2 - ws.left;
+      const y2 = r2.top + r2.height/2 - ws.top;
+      const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke','#444');
+      line.setAttribute('stroke-width','2');
+      // color wire if signal =1
+      const sig = getSignalForConnection(c);
+      if(sig) {
+        line.setAttribute('stroke','#0a0');
       }
-      if(tempLine) wires.removeChild(tempLine);
-      tempLine=null; startPort=null;
-      redrawWires(); updateLogic();
-    };
+      line.addEventListener('click', ()=>{
+        connections.splice(i,1);
+        redrawWires();
+        updateLogic();
+      });
+      wires.appendChild(line);
+    }
   });
+}
 
-  function redrawWires(){
-    wires.innerHTML="";
-    connections.forEach((c,i)=>{
-      const p1=document.querySelector(`[data-id='${c[0]}']`);
-      const p2=document.querySelector(`[data-id='${c[1]}']`);
-      if(p1&&p2){
-        const r1=p1.getBoundingClientRect(), r2=p2.getBoundingClientRect();
-        const ws=workspace.getBoundingClientRect();
-        const x1=r1.left+r1.width/2-ws.left, y1=r1.top+r1.height/2-ws.top;
-        const x2=r2.left+r2.width/2-ws.left, y2=r2.top+r2.height/2-ws.top;
-        const line=document.createElementNS("http://www.w3.org/2000/svg","line");
-        line.setAttribute("x1",x1); line.setAttribute("y1",y1);
-        line.setAttribute("x2",x2); line.setAttribute("y2",y2);
-        line.onclick=()=>{connections.splice(i,1); redrawWires(); updateLogic();};
-        wires.appendChild(line);
-      }
-    });
+// Logic
+function updateLogic(){
+  // reset ports
+  document.querySelectorAll('.port').forEach(p=>p.classList.remove('on','off'));
+
+  const needed = [
+    ["data","and1_in1"], ["enable","and1_in2"], ["and1_out","latch_in1"],
+    ["data","not1_in"], ["not1_out","and2_in1"], ["enable","and2_in2"],
+    ["and2_out","latch_in2"], ["latch_out","disp_in"]
+  ];
+  const ok = needed.every(req =>
+    connections.some(c=>(c[0]===req[0]&&c[1]===req[1])||(c[0]===req[1]&&c[1]===req[0]))
+  );
+  if(!ok){
+    document.getElementById('message').textContent = "❌ Not correct yet.";
+    return;
   }
 
-  function updateLogic(){
-    document.querySelectorAll('.port').forEach(p=>p.classList.remove("on","off"));
+  // Evaluate gates
+  values.and1_out = values.data & values.enable;
+  values.not1_out = values.data ^ 1;
+  values.and2_out = values.not1_out & values.enable;
 
-    const needed=[["data","and1_in1"],["enable","and1_in2"],["and1_out","latch_in1"],
-      ["data","not1_in"],["not1_out","and2_in1"],["enable","and2_in2"],
-      ["and2_out","latch_in2"],["latch_out","disp_in"]];
-    const ok=needed.every(req=>connections.some(c=>(c[0]===req[0]&&c[1]===req[1])||(c[0]===req[1]&&c[1]===req[0])));
-    if(!ok){document.getElementById("message").textContent="❌ Not correct yet.";return;}
+  const S = values.and1_out, R = values.and2_out;
+  if(S && !R) latchQ = 1;
+  else if(!S && R) latchQ = 0;
+  // else hold
+  values.latch_out = latchQ;
+  values.disp_in = values.latch_out;
 
-    values.and1_out=values.data&values.enable;
-    values.not1_out=values.data^1;
-    values.and2_out=values.not1_out&values.enable;
-    const S=values.and1_out, R=values.and2_out;
-    if(S&&!R) latchQ=1; else if(!S&&R) latchQ=0;
-    values.latch_out=latchQ; values.disp_in=values.latch_out;
-    document.getElementById("out_val").textContent="("+values.disp_in+")";
+  document.getElementById('out_val').textContent = values.disp_in;
 
-    for(const k in values){
-      const el=document.querySelector(`[data-id='${k}']`);
-      if(el) el.classList.add(values[k]?"on":"off");
+  // Color ports
+  for(let key in values){
+    const p = portElem(key);
+    if(p){
+      if(values[key]) p.classList.add('on');
+      else p.classList.add('off');
     }
-    document.getElementById("message").textContent="✅ Correct! Latch working.";
   }
+
+  document.getElementById('message').textContent = "✅ Correct wiring & output active.";
+}
+
+// Helper: determine signal on connection (if either endpoint has value=1)
+// For simplicity: if either of the two ports has a value, consider the wire “1”
+function getSignalForConnection(conn){
+  const [a,b]=conn;
+  const va = (values[a] !== undefined ? values[a] : 0);
+  const vb = (values[b] !== undefined ? values[b] : 0);
+  return (va || vb);
+}
+
 </script>
+
 </body>
 </html>
