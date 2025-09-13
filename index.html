@@ -2,60 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Gated Latch Builder</title>
+  <title>Build the Gated Latch</title>
   <style>
-    body { background:#f0f0f0; font-family:sans-serif; text-align:center; }
-    #workspace { width:800px; height:500px; border:2px dashed #888; margin:20px auto; position:relative; background:white; }
-    .component {
-      width:80px; height:50px; background:#ddd; border:1px solid #333; 
-      position:absolute; cursor:move; display:flex; align-items:center; justify-content:center;
+    body { background:#f9f9f9; font-family:sans-serif; text-align:center; }
+    #workspace {
+      width:900px; height:500px; border:2px dashed #555;
+      margin:20px auto; position:relative; background:white;
     }
-    #message { margin-top:20px; font-size:20px; font-weight:bold; color:green; }
+    .component {
+      width:100px; height:60px; background:#ddd; border:2px solid #333;
+      position:absolute; cursor:move; border-radius:8px;
+      display:flex; justify-content:center; align-items:center;
+    }
+    .port {
+      width:12px; height:12px; background:black; border-radius:50%;
+      position:absolute; cursor:pointer;
+    }
+    .output { right:-8px; top:50%; transform:translateY(-50%); }
+    .input { left:-8px; }
+    #message { margin-top:15px; font-size:20px; font-weight:bold; }
+    svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+    line { stroke:black; stroke-width:2; }
   </style>
 </head>
 <body>
-  <h2>Build the Gated Latch</h2>
+  <h2>Connect the Gates to Build a Gated Latch</h2>
   <div id="workspace">
-    <div class="component" id="data" style="top:20px;left:20px;">Data</div>
-    <div class="component" id="enable" style="top:100px;left:20px;">Enable</div>
-    <div class="component" id="and1" style="top:200px;left:200px;">AND1</div>
-    <div class="component" id="not1" style="top:50px;left:200px;">NOT</div>
-    <div class="component" id="and2" style="top:150px;left:400px;">AND2</div>
-    <div class="component" id="latch" style="top:100px;left:600px;">AND-OR Latch</div>
+    <svg id="wires"></svg>
+
+    <div class="component" id="data" style="top:50px;left:20px;">
+      Data
+      <div class="output port" data-id="data"></div>
+    </div>
+    <div class="component" id="enable" style="top:150px;left:20px;">
+      Enable
+      <div class="output port" data-id="enable"></div>
+    </div>
+
+    <div class="component" id="and1" style="top:100px;left:250px;">
+      AND1
+      <div class="input port" style="top:20%;" data-id="and1_in1"></div>
+      <div class="input port" style="top:70%;" data-id="and1_in2"></div>
+      <div class="output port" data-id="and1_out"></div>
+    </div>
+
+    <div class="component" id="not1" style="top:250px;left:250px;">
+      NOT
+      <div class="input port" style="top:50%;" data-id="not1_in"></div>
+      <div class="output port" data-id="not1_out"></div>
+    </div>
+
+    <div class="component" id="and2" style="top:250px;left:450px;">
+      AND2
+      <div class="input port" style="top:20%;" data-id="and2_in1"></div>
+      <div class="input port" style="top:70%;" data-id="and2_in2"></div>
+      <div class="output port" data-id="and2_out"></div>
+    </div>
+
+    <div class="component" id="latch" style="top:150px;left:650px;">
+      Latch
+      <div class="input port" style="top:30%;" data-id="latch_in1"></div>
+      <div class="input port" style="top:70%;" data-id="latch_in2"></div>
+      <div class="output port" data-id="latch_out"></div>
+    </div>
   </div>
   <button onclick="checkSolution()">Check</button>
   <div id="message"></div>
 
   <script>
-    // Dragging logic
-    const components = document.querySelectorAll('.component');
-    let selected = null, offsetX=0, offsetY=0;
+    const wires = document.getElementById("wires");
+    let startPort = null;
+    const connections = [];
 
-    components.forEach(c=>{
-      c.onmousedown = e=>{
-        selected = c;
-        offsetX = e.offsetX; offsetY = e.offsetY;
+    // draw a line between two ports
+    function connect(p1, p2) {
+      const r1 = p1.getBoundingClientRect();
+      const r2 = p2.getBoundingClientRect();
+      const ws = workspace.getBoundingClientRect();
+      const x1 = r1.left + r1.width/2 - ws.left;
+      const y1 = r1.top + r1.height/2 - ws.top;
+      const x2 = r2.left + r2.width/2 - ws.left;
+      const y2 = r2.top + r2.height/2 - ws.top;
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      wires.appendChild(line);
+
+      connections.push([p1.dataset.id, p2.dataset.id]);
+    }
+
+    document.querySelectorAll('.port').forEach(p=>{
+      p.onclick = ()=>{
+        if(!startPort) {
+          startPort = p;
+        } else {
+          if(startPort!==p) {
+            connect(startPort, p);
+          }
+          startPort=null;
+        }
       };
     });
-    document.onmousemove = e=>{
-      if(selected){
-        selected.style.left = (e.pageX - offsetX - workspace.offsetLeft)+"px";
-        selected.style.top = (e.pageY - offsetY - workspace.offsetTop)+"px";
-      }
-    };
-    document.onmouseup = ()=>{ selected=null; };
 
-    // For now, we check by IDs manually (mock wiring).
     function checkSolution(){
-      // Simplified: check if components are roughly in the "correct" zone
-      const and1 = document.getElementById('and1').getBoundingClientRect().left;
-      const and2 = document.getElementById('and2').getBoundingClientRect().left;
-      const not1 = document.getElementById('not1').getBoundingClientRect().left;
-      if(and1>100 && and2>300 && not1>100){
-        document.getElementById("message").textContent="✅ Correct! You built the gated latch!";
-        components.forEach(c=>c.onmousedown=null); // freeze
+      const needed = [
+        ["data","and1_in1"],
+        ["enable","and1_in2"],
+        ["and1_out","latch_in1"],
+        ["data","not1_in"],
+        ["not1_out","and2_in1"],
+        ["enable","and2_in2"],
+        ["and2_out","latch_in2"]
+      ];
+      const ok = needed.every(req =>
+        connections.some(c=>(c[0]===req[0] && c[1]===req[1]) || (c[0]===req[1] && c[1]===req[0]))
+      );
+      if(ok){
+        document.getElementById("message").textContent="✅ Correct! Gated Latch Built!";
       } else {
-        document.getElementById("message").textContent="❌ Not correct yet!";
+        document.getElementById("message").textContent="❌ Not correct yet.";
       }
     }
   </script>
