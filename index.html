@@ -1,331 +1,424 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Gated Latch with CircuitVerse-like Visuals</title>
+<meta charset="UTF-8" />
+<title>Gated Latch Builder — CircuitVerse-style</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-  body { background:#f0f0f0; font-family:sans-serif; }
-  #workspace {
-    width:1000px; height:600px;
-    margin:20px auto; position:relative;
-    background:#fff; border:1px solid #999;
+  :root{
+    --bg:#ffffff; --grid:#eef0f3; --border:#333; --gate:#e5e7eb;
+    --wire0:#7a7a7a; --wire1:#0a0; --port0:#9aa0a6; --port1:#00bd2f;
+    --accent:#ff7a00; --text:#111827;
   }
-  svg#gates {
-    position:absolute; top:0; left:0;
-    width:100%; height:100%;
-    pointer-events:none;
+  body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:#f5f7fb;color:var(--text);}
+  h2{margin:16px 0;text-align:center;font-weight:700}
+  #wrap{max-width:1100px;margin:0 auto;padding:12px}
+  #workspace{
+    position:relative;width:100%;height:640px;background:var(--bg);border:1px solid #cfd5dc;border-radius:10px;
+    box-shadow:0 4px 22px rgba(25,35,60,.06);overflow:hidden;
+    background-image:
+      linear-gradient(0deg, var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:24px 24px;
   }
-  .component {
-    position:absolute;
-    cursor:move;
-    user-select:none;
+  /* Gates & components */
+  .component{
+    position:absolute; user-select:none; cursor:move; touch-action:none;
   }
-  .port {
-    width:12px; height:12px;
-    border-radius:50%;
-    background:#888;
-    position:absolute;
-    cursor:pointer;
-    border:1px solid #333;
+  .label{position:absolute; left:50%; transform:translateX(-50%); bottom:-20px; font-size:12px; color:#374151;}
+  .gateCanvas{display:block}
+  /* Ports */
+  .port{
+    position:absolute; width:14px; height:14px; border-radius:50%;
+    border:1px solid #222; background:var(--port0); cursor:crosshair; box-shadow:0 0 0 2px #fff inset;
   }
-  .on { background:#0a0; }
-  .off { background:#888; }
-  .label {
-    text-align:center;
-    font-size:14px;
-    user-select:none;
-  }
+  .port.on{ background:var(--port1); }
+  .port.off{ background:var(--port0); }
+  /* Wires */
+  svg#wires{position:absolute; inset:0; overflow:visible;}
+  .wire{ stroke:var(--wire0); stroke-width:2.5; fill:none; cursor:pointer; }
+  .wire.on{ stroke:var(--wire1); }
+  .wirePreview{ stroke:var(--accent); stroke-dasharray:6 6; stroke-width:2.5; fill:none; pointer-events:none; }
+  /* Info bar */
+  #hud{display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:14px;color:#4b5563}
+  #status{font-weight:600}
+  #outBadge{padding:2px 8px;border-radius:999px;background:#eef2ff;color:#1f2a5a}
+  .code{font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
 </style>
 </head>
 <body>
+  <div id="wrap">
+    <h2>Build the Gated Latch</h2>
+    <div id="workspace">
+      <!-- wires layer -->
+      <svg id="wires"></svg>
 
-<h2 style="text-align:center">Gated Latch Builder (Styled)</h2>
-<div id="workspace">
-  <svg id="wires" style="position:absolute; top:0; left:0; width:100%; height:100%;"></svg>
-  <svg id="gates"></svg>
+      <!-- Inputs -->
+      <div class="component inputComp" id="data" style="left:24px; top:64px;">
+        <canvas class="gateCanvas" width="80" height="40"></canvas>
+        <div class="label">DATA (<span id="data_val">0</span>)</div>
+        <div class="port output off" data-id="data" style="right:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
 
-  <!-- Inputs -->
-  <div class="component inputComp" id="data" style="top:50px; left:20px; width:80px; height:40px;">
-    <div class="label">DATA (<span id="data_val">0</span>)</div>
-    <div class="port output off" data-id="data" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
+      <div class="component inputComp" id="enable" style="left:24px; top:144px;">
+        <canvas class="gateCanvas" width="80" height="40"></canvas>
+        <div class="label">ENABLE (<span id="enable_val">0</span>)</div>
+        <div class="port output off" data-id="enable" style="right:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
+
+      <!-- AND 1 -->
+      <div class="component gate" id="and1" style="left:232px; top:96px;">
+        <canvas class="gateCanvas" width="96" height="64"></canvas>
+        <div class="label">AND</div>
+        <div class="port input off"  data-id="and1_in1" style="left:-7px; top:22%; transform:translateY(-50%);"></div>
+        <div class="port input off"  data-id="and1_in2" style="left:-7px; top:78%; transform:translateY(-50%);"></div>
+        <div class="port output off" data-id="and1_out" style="right:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
+
+      <!-- NOT -->
+      <div class="component gate" id="not1" style="left:232px; top:240px;">
+        <canvas class="gateCanvas" width="96" height="64"></canvas>
+        <div class="label">NOT</div>
+        <div class="port input off"  data-id="not1_in"  style="left:-7px; top:50%; transform:translateY(-50%);"></div>
+        <div class="port output off" data-id="not1_out" style="right:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
+
+      <!-- AND 2 -->
+      <div class="component gate" id="and2" style="left:432px; top:240px;">
+        <canvas class="gateCanvas" width="96" height="64"></canvas>
+        <div class="label">AND</div>
+        <div class="port input off"  data-id="and2_in1" style="left:-7px; top:22%; transform:translateY(-50%);"></div>
+        <div class="port input off"  data-id="and2_in2" style="left:-7px; top:78%; transform:translateY(-50%);"></div>
+        <div class="port output off" data-id="and2_out" style="right:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
+
+      <!-- Latch -->
+      <div class="component gate" id="latch" style="left:632px; top:144px;">
+        <canvas class="gateCanvas" width="112" height="80"></canvas>
+        <div class="label">Latch</div>
+        <div class="port input off"  data-id="latch_in1" style="left:-7px; top:30%; transform:translateY(-50%);"></div>
+        <div class="port input off"  data-id="latch_in2" style="left:-7px; top:70%; transform:translateY(-50%);"></div>
+        <div class="port output off" data-id="latch_out" style="right:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
+
+      <!-- Display -->
+      <div class="component" id="display" style="left:824px; top:208px;">
+        <canvas class="gateCanvas" width="92" height="48"></canvas>
+        <div class="label">OUTPUT (<span id="out_val">0</span>)</div>
+        <div class="port input off" data-id="disp_in" style="left:-7px; top:50%; transform:translateY(-50%);"></div>
+      </div>
+    </div>
+
+    <div id="hud">
+      <div id="status">Wire the circuit like the gated latch. Click DATA/ENABLE to toggle.</div>
+      <div id="outBadge">Q = <span id="q_badge">0</span></div>
+    </div>
   </div>
-  <div class="component inputComp" id="enable" style="top:120px; left:20px; width:80px; height:40px;">
-    <div class="label">ENABLE (<span id="enable_val">0</span>)</div>
-    <div class="port output off" data-id="enable" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
-  </div>
-
-  <!-- AND gate 1 -->
-  <div class="component gate" id="and1" style="top:80px; left:200px; width:80px; height:60px;">
-    <canvas class="gateCanvas" width="80" height="60"></canvas>
-    <div class="port input off" data-id="and1_in1" style="left:-6px; top:20%; transform:translateY(-50%);"></div>
-    <div class="port input off" data-id="and1_in2" style="left:-6px; top:80%; transform:translateY(-50%);"></div>
-    <div class="port output off" data-id="and1_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
-  </div>
-
-  <!-- NOT gate -->
-  <div class="component gate" id="not1" style="top:200px; left:200px; width:80px; height:60px;">
-    <canvas class="gateCanvas" width="80" height="60"></canvas>
-    <div class="port input off" data-id="not1_in" style="left:-6px; top:50%; transform:translateY(-50%);"></div>
-    <div class="port output off" data-id="not1_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
-  </div>
-
-  <!-- AND gate 2 -->
-  <div class="component gate" id="and2" style="top:200px; left:400px; width:80px; height:60px;">
-    <canvas class="gateCanvas" width="80" height="60"></canvas>
-    <div class="port input off" data-id="and2_in1" style="left:-6px; top:20%; transform:translateY(-50%);"></div>
-    <div class="port input off" data-id="and2_in2" style="left:-6px; top:80%; transform:translateY(-50%);"></div>
-    <div class="port output off" data-id="and2_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
-  </div>
-
-  <!-- Latch -->
-  <div class="component gate" id="latch" style="top:120px; left:600px; width:100px; height:80px;">
-    <canvas class="gateCanvas" width="100" height="80"></canvas>
-    <div class="port input off" data-id="latch_in1" style="left:-6px; top:30%; transform:translateY(-50%);"></div>
-    <div class="port input off" data-id="latch_in2" style="left:-6px; top:70%; transform:translateY(-50%);"></div>
-    <div class="port output off" data-id="latch_out" style="right:-6px; top:50%; transform:translateY(-50%);"></div>
-  </div>
-
-  <!-- Display/output block -->
-  <div class="component" id="display" style="top:200px; left:800px; width:80px; height:40px;">
-    <div class="label">OUTPUT (<span id="out_val">0</span>)</div>
-    <div class="port input off" data-id="disp_in" style="left:-6px; top:50%; transform:translateY(-50%);"></div>
-  </div>
-
-</div>
 
 <script>
-// Helper to draw Gate shapes on canvas
-function drawAND(ctx, w, h){
+/* ========================
+   Canvas Gate Drawings
+   ======================== */
+function drawInputCanvas(cv){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height;
   ctx.clearRect(0,0,w,h);
-  ctx.fillStyle = "#ddd";
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 2;
-  // rectangle left half
-  ctx.beginPath();
-  ctx.moveTo(0,0);
-  ctx.lineTo(w/2,0);
-  ctx.lineTo(w/2,h);
-  ctx.lineTo(0,h);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  // half-circle right
-  ctx.beginPath();
-  ctx.moveTo(w/2,0);
-  ctx.arc(w/2, h/2, h/2, -Math.PI/2, Math.PI/2);
-  ctx.lineTo(w/2, h);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--gate');
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border');
+  ctx.lineWidth=2;
+  ctx.fillRect(0,0,w,h); ctx.strokeRect(0,0,w,h);
 }
-
-function drawNOT(ctx, w, h){
+function drawANDCanvas(cv){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height;
   ctx.clearRect(0,0,w,h);
-  ctx.fillStyle = "#ddd";
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth =2;
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--gate');
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border');
+  ctx.lineWidth=2;
+  // left rect
+  ctx.beginPath();
+  ctx.moveTo(0,0); ctx.lineTo(w*0.5,0); ctx.lineTo(w*0.5,h); ctx.lineTo(0,h); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // right half-circle
+  ctx.beginPath();
+  ctx.moveTo(w*0.5,0);
+  ctx.arc(w*0.5, h/2, h/2, -Math.PI/2, Math.PI/2);
+  ctx.lineTo(w*0.5,h);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+}
+function drawNOTCanvas(cv){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--gate');
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border');
+  ctx.lineWidth=2;
   // triangle
   ctx.beginPath();
-  ctx.moveTo(0,0);
-  ctx.lineTo(w*0.8, h/2);
-  ctx.lineTo(0,h);
-  ctx.closePath();
+  ctx.moveTo(0,0); ctx.lineTo(w*0.82,h/2); ctx.lineTo(0,h); ctx.closePath();
   ctx.fill(); ctx.stroke();
-  // circle at output
+  // bubble
   ctx.beginPath();
-  ctx.arc(w*0.85, h/2, 5, 0, 2*Math.PI);
-  ctx.fill(); ctx.stroke();
+  ctx.arc(w*0.88, h/2, 6, 0, 2*Math.PI);
+  ctx.fillStyle="#fff"; ctx.fill(); ctx.stroke();
+}
+function drawLatchCanvas(cv){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--gate');
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border');
+  ctx.lineWidth=2;
+  ctx.fillRect(0,0,w,h); ctx.strokeRect(0,0,w,h);
+  // small label inside for feel
+  ctx.fillStyle="#111"; ctx.font="bold 14px system-ui, sans-serif";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText("Latch", w/2, h/2);
+}
+function drawDisplayCanvas(cv){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#f3f4f6";
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border');
+  ctx.lineWidth=2;
+  ctx.fillRect(0,0,w,h); ctx.strokeRect(0,0,w,h);
 }
 
-// Initialize drawing
-document.querySelectorAll('.gate').forEach(g=>{
-  const canv = g.querySelector('.gateCanvas');
-  const ctx = canv.getContext('2d');
-  if(g.id.startsWith('and')) drawAND(ctx, canv.width, canv.height);
-  else if(g.id==='latch'){
-    // approximate latch block: rectangle with two inputs, one output
-    ctx.fillStyle = "#ddd";
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth=2;
-    ctx.fillRect(0,0,canv.width,canv.height);
-    ctx.strokeRect(0,0,canv.width,canv.height);
-    ctx.fillStyle = "#000";
-    ctx.font = "16px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Latch", canv.width/2, canv.height/2);
-  }
-  else if(g.id==='not1') drawNOT(ctx, canv.width, canv.height);
-});
+/* paint all canvases once */
+document.querySelectorAll('#data .gateCanvas,#enable .gateCanvas').forEach(drawInputCanvas);
+document.querySelectorAll('#and1 .gateCanvas,#and2 .gateCanvas').forEach(drawANDCanvas);
+document.querySelectorAll('#not1 .gateCanvas').forEach(drawNOTCanvas);
+document.querySelectorAll('#latch .gateCanvas').forEach(drawLatchCanvas);
+document.querySelectorAll('#display .gateCanvas').forEach(drawDisplayCanvas);
 
-// State & Logic
-let values = { data:0, enable:0, and1_out:0, not1_out:0, and2_out:0, latch_out:0, disp_in:0 };
-let latchQ = 0;
-let connections = [];
-let tempLine = null, startPort = null;
+/* ========================
+   Drag & Drop of components
+   ======================== */
+const workspace=document.getElementById('workspace');
+let dragging=null, dragOffX=0, dragOffY=0, freezeWhenCorrect=true;
 
-// Utility to find port element by data-id
-function portElem(id){
-  return document.querySelector(`[data-id='${id}']`);
-}
-
-// Draggable
-let selected = null, offsetX=0, offsetY=0;
-const workspace = document.getElementById('workspace');
-document.querySelectorAll('.component').forEach(c=>{
-  c.addEventListener('mousedown', e=>{
-    if(e.target.classList.contains('port')) return;
-    selected = c;
-    offsetX = e.offsetX;
-    offsetY = e.offsetY;
+for(const comp of document.querySelectorAll('.component')){
+  comp.addEventListener('mousedown', (e)=>{
+    if(e.target.classList.contains('port')) return; // ports handled for wiring
+    if(comp.dataset.locked==="1") return;
+    dragging=comp;
+    const rect=comp.getBoundingClientRect(), ws=workspace.getBoundingClientRect();
+    dragOffX = e.clientX - rect.left + ws.left;
+    dragOffY = e.clientY - rect.top  + ws.top;
   });
-});
-document.addEventListener('mousemove', e=>{
-  if(selected){
-    selected.style.left = (e.pageX - offsetX - workspace.getBoundingClientRect().left) + 'px';
-    selected.style.top  = (e.pageY - offsetY - workspace.getBoundingClientRect().top) + 'px';
+}
+
+document.addEventListener('mousemove', (e)=>{
+  if(dragging){
+    const ws=workspace.getBoundingClientRect();
+    let x = e.clientX - dragOffX;
+    let y = e.clientY - dragOffY;
+    // snap to grid (24px)
+    x = Math.round(x/24)*24;
+    y = Math.round(y/24)*24;
+    dragging.style.left = Math.max(0, Math.min(ws.width-40, x))+"px";
+    dragging.style.top  = Math.max(0, Math.min(ws.height-40, y))+"px";
     redrawWires();
   }
-  if(tempLine){
-    tempLine.setAttribute('x2', e.pageX - workspace.getBoundingClientRect().left);
-    tempLine.setAttribute('y2', e.pageY - workspace.getBoundingClientRect().top);
+  // update preview wire
+  if(previewPath){
+    const ws=workspace.getBoundingClientRect();
+    const x=e.clientX - ws.left, y=e.clientY - ws.top;
+    updatePreviewPath(previewStart, {x,y});
   }
 });
-document.addEventListener('mouseup', e=>{
-  selected = null;
-});
+document.addEventListener('mouseup', ()=> dragging=null);
 
-// Input toggle
-document.querySelectorAll('.inputComp').forEach(ic=>{
-  ic.addEventListener('click', e=>{
-    if(e.target.classList.contains('port')) return;
-    const id = ic.id;
-    values[id] = values[id] ? 0 : 1;
-    document.getElementById(id+"_val").textContent = values[id];
-    updateLogic();
-  });
-});
+/* ========================
+   Wiring
+   ======================== */
+const wiresSVG = document.getElementById('wires');
+let connections=[];                 // array of [aId, bId]
+let previewPath=null, previewStart=null, startPortEl=null;
 
-// Wire creation by drag
-document.querySelectorAll('.port').forEach(p=>{
-  p.addEventListener('mousedown', e=>{
+function portCenter(el){
+  const ws=workspace.getBoundingClientRect();
+  const r=el.getBoundingClientRect();
+  return {x: r.left + r.width/2 - ws.left, y: r.top + r.height/2 - ws.top};
+}
+
+/* orthogonal L path (x -> midX -> y) */
+function makeOrthoPath(p1, p2){
+  const midX = (p1.x + p2.x)/2; // simple dogleg
+  return `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`;
+}
+
+function updatePreviewPath(p1, p2){
+  if(!previewPath) return;
+  previewPath.setAttribute('d', makeOrthoPath(p1,p2));
+}
+
+function startPreviewFrom(portEl){
+  const c=portCenter(portEl);
+  previewStart = c;
+  previewPath = document.createElementNS("http://www.w3.org/2000/svg","path");
+  previewPath.setAttribute('class','wirePreview');
+  previewPath.setAttribute('d', `M ${c.x} ${c.y} L ${c.x} ${c.y}`);
+  wiresSVG.appendChild(previewPath);
+}
+
+function endPreview(commitToPortEl){
+  if(previewPath){
+    wiresSVG.removeChild(previewPath);
+    previewPath=null; previewStart=null;
+  }
+  if(startPortEl && commitToPortEl && startPortEl!==commitToPortEl){
+    connections.push([startPortEl.dataset.id, commitToPortEl.dataset.id]);
+    redrawWires(); updateLogic();
+  }
+  startPortEl=null;
+}
+
+/* begin drag wire on mousedown */
+for(const port of document.querySelectorAll('.port')){
+  port.addEventListener('mousedown', (e)=>{
     e.stopPropagation();
-    startPort = p;
-    const ws = workspace.getBoundingClientRect();
-    const pr = p.getBoundingClientRect();
-    const x = pr.left + pr.width/2 - ws.left;
-    const y = pr.top + pr.height/2 - ws.top;
-    tempLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    tempLine.setAttribute('x1', x);
-    tempLine.setAttribute('y1', y);
-    tempLine.setAttribute('x2', x);
-    tempLine.setAttribute('y2', y);
-    tempLine.setAttribute('stroke','orange');
-    tempLine.setAttribute('stroke-dasharray','4');
-    wires.appendChild(tempLine);
+    if(port.closest('.component')?.dataset.locked==="1") return;
+    startPortEl = port;
+    startPreviewFrom(port);
   });
-  p.addEventListener('mouseup', e=>{
-    if(startPort && startPort!==p){
-      connections.push([startPort.dataset.id, p.dataset.id]);
-    }
-    if(tempLine){
-      wires.removeChild(tempLine);
-      tempLine = null;
-    }
-    startPort = null;
-    redrawWires();
-    updateLogic();
+  port.addEventListener('mouseup', (e)=>{
+    if(!startPortEl){ endPreview(null); return; }
+    endPreview(port);
   });
-});
+}
+/* cancel preview if mouseup on empty workspace */
+workspace.addEventListener('mouseup', ()=> endPreview(null));
 
-// Delete wire on click
 function redrawWires(){
-  wires.innerHTML = '';
-  connections.forEach((c,i)=>{
-    const p1 = portElem(c[0]);
-    const p2 = portElem(c[1]);
-    if(p1 && p2){
-      const r1 = p1.getBoundingClientRect();
-      const r2 = p2.getBoundingClientRect();
-      const ws = workspace.getBoundingClientRect();
-      const x1 = r1.left + r1.width/2 - ws.left;
-      const y1 = r1.top + r1.height/2 - ws.top;
-      const x2 = r2.left + r2.width/2 - ws.left;
-      const y2 = r2.top + r2.height/2 - ws.top;
-      const line = document.createElementNS("http://www.w3.org/2000/svg","line");
-      line.setAttribute('x1', x1);
-      line.setAttribute('y1', y1);
-      line.setAttribute('x2', x2);
-      line.setAttribute('y2', y2);
-      line.setAttribute('stroke','#444');
-      line.setAttribute('stroke-width','2');
-      // color wire if signal =1
-      const sig = getSignalForConnection(c);
-      if(sig) {
-        line.setAttribute('stroke','#0a0');
-      }
-      line.addEventListener('click', ()=>{
-        connections.splice(i,1);
-        redrawWires();
-        updateLogic();
-      });
-      wires.appendChild(line);
-    }
+  // clear
+  wiresSVG.innerHTML="";
+  // repaint all connections
+  connections.forEach((conn, idx)=>{
+    const a=document.querySelector(`[data-id='${conn[0]}']`);
+    const b=document.querySelector(`[data-id='${conn[1]}']`);
+    if(!a||!b) return;
+    const p1=portCenter(a), p2=portCenter(b);
+    const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute('d', makeOrthoPath(p1,p2));
+    path.setAttribute('class','wire');
+    // delete on click
+    path.addEventListener('click', ()=>{
+      connections.splice(idx,1);
+      redrawWires(); updateLogic();
+    });
+    wiresSVG.appendChild(path);
   });
 }
 
-// Logic
-function updateLogic(){
-  // reset ports
-  document.querySelectorAll('.port').forEach(p=>p.classList.remove('on','off'));
+/* ========================
+   Logic / Simulation
+   ======================== */
+let values = {
+  data:0, enable:0,
+  and1_out:0, not1_out:0, and2_out:0,
+  latch_out:0, disp_in:0
+};
+let latchQ=0;
+/* clicking the input blocks toggles value */
+for(const inputComp of document.querySelectorAll('.inputComp')){
+  inputComp.addEventListener('click', (e)=>{
+    if(e.target.classList.contains('port')) return;
+    const id=inputComp.id;
+    values[id] = values[id] ? 0 : 1;
+    document.getElementById(id+'_val').textContent = values[id];
+    updateLogic();
+  });
+}
 
-  const needed = [
-    ["data","and1_in1"], ["enable","and1_in2"], ["and1_out","latch_in1"],
-    ["data","not1_in"], ["not1_out","and2_in1"], ["enable","and2_in2"],
-    ["and2_out","latch_in2"], ["latch_out","disp_in"]
-  ];
-  const ok = needed.every(req =>
-    connections.some(c=>(c[0]===req[0]&&c[1]===req[1])||(c[0]===req[1]&&c[1]===req[0]))
-  );
-  if(!ok){
-    document.getElementById('message').textContent = "❌ Not correct yet.";
+/* check correct topology */
+const REQUIRED = [
+  ["data","and1_in1"],
+  ["enable","and1_in2"],
+  ["and1_out","latch_in1"],
+  ["data","not1_in"],
+  ["not1_out","and2_in1"],
+  ["enable","and2_in2"],
+  ["and2_out","latch_in2"],
+  ["latch_out","disp_in"]
+];
+function isWired(a,b){
+  return connections.some(c => (c[0]===a && c[1]===b) || (c[0]===b && c[1]===a));
+}
+function topologyOK(){
+  return REQUIRED.every(([a,b])=>isWired(a,b));
+}
+
+function updateLogic(){
+  // color all ports off initially
+  document.querySelectorAll('.port').forEach(p=>{p.classList.remove('on','off'); p.classList.add('off');});
+  document.getElementById('status').textContent = "❌ Not correct yet.";
+  // compute only when required connections exist
+  if(!topologyOK()){
+    colorWires(); // still show 0/gray
     return;
   }
 
-  // Evaluate gates
-  values.and1_out = values.data & values.enable;
-  values.not1_out = values.data ^ 1;
-  values.and2_out = values.not1_out & values.enable;
+  // Gate equations
+  const D = values.data|0;
+  const E = values.enable|0;
+  const AND1 = (D & E);
+  const NOT  = (D ^ 1);
+  const AND2 = (NOT & E);
 
-  const S = values.and1_out, R = values.and2_out;
-  if(S && !R) latchQ = 1;
-  else if(!S && R) latchQ = 0;
-  // else hold
+  values.and1_out = AND1;
+  values.not1_out = NOT;
+  values.and2_out = AND2;
+
+  // SR latch (S = and1_out, R = and2_out)
+  const S = AND1, R = AND2;
+  if (S && !R) latchQ = 1;
+  else if (!S && R) latchQ = 0;
+  // else hold; if S=R=1 -> invalid, hold previous
+
   values.latch_out = latchQ;
-  values.disp_in = values.latch_out;
+  values.disp_in   = values.latch_out;
 
+  // HUD
   document.getElementById('out_val').textContent = values.disp_in;
+  document.getElementById('q_badge').textContent = values.latch_out;
+  document.getElementById('status').textContent  = "✅ Correct wiring — latch active.";
 
-  // Color ports
-  for(let key in values){
-    const p = portElem(key);
-    if(p){
-      if(values[key]) p.classList.add('on');
-      else p.classList.add('off');
+  // color ports based on current values
+  for(const key in values){
+    const port=document.querySelector(`[data-id='${key}']`);
+    if(port){
+      port.classList.remove('on','off');
+      port.classList.add(values[key] ? 'on' : 'off');
     }
   }
 
-  document.getElementById('message').textContent = "✅ Correct wiring & output active.";
+  // optional: freeze layout once correct (you can disable via flag)
+  if(freezeWhenCorrect){
+    for(const comp of document.querySelectorAll('.component')) comp.dataset.locked="1";
+  }
+
+  colorWires();
 }
 
-// Helper: determine signal on connection (if either endpoint has value=1)
-// For simplicity: if either of the two ports has a value, consider the wire “1”
-function getSignalForConnection(conn){
+/* Determine signal on a wire: use whichever endpoint maps to a known value */
+function wireSignal(conn){
   const [a,b]=conn;
-  const va = (values[a] !== undefined ? values[a] : 0);
-  const vb = (values[b] !== undefined ? values[b] : 0);
-  return (va || vb);
+  const va = (values[a]!==undefined) ? values[a] : null;
+  const vb = (values[b]!==undefined) ? values[b] : null;
+  // prefer an output-ish identity if present
+  if(va!==null) return va;
+  if(vb!==null) return vb;
+  return 0;
+}
+function colorWires(){
+  // repaint to apply coloring
+  redrawWires();
+  [...wiresSVG.querySelectorAll('.wire')].forEach((path, idx)=>{
+    const sig = wireSignal(connections[idx]);
+    if(sig) path.classList.add('on'); else path.classList.remove('on');
+  });
 }
 
+/* initial draw */
+redrawWires();
+updateLogic();
 </script>
-
 </body>
 </html>
