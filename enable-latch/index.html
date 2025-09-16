@@ -47,6 +47,7 @@
       display: block;
       width: 100%;
       height: 100%;
+      touch-action: manipulation; /* allow taps */
     }
   </style>
 </head>
@@ -74,12 +75,12 @@ let signals = { enable: [], D: [], Q: [] };
 const BASE_W_SCHEM = 350, BASE_H_SCHEM = 240;
 const BASE_W_WAVE = 600, BASE_H_WAVE = 200;
 
-// helper: resize & scale into base coords
+// ---------- Resize & Scale ----------
 function prepareContext(canvas, ctx, baseW, baseH) {
-  const r = canvas.parentElement.getBoundingClientRect();
+  const r = canvas.getBoundingClientRect();
   canvas.width = r.width;
   canvas.height = r.height;
-  ctx.setTransform(1,0,0,1,0,0); // reset
+  ctx.setTransform(1,0,0,1,0,0); // reset transform
   const sx = r.width / baseW;
   const sy = r.height / baseH;
   const s = Math.min(sx, sy);
@@ -141,15 +142,26 @@ function updateLatch() {
   drawSchematic();
 }
 
-// click toggles
-schematic.addEventListener("click", function(e) {
-  const rect = schematic.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * BASE_W_SCHEM / rect.width;
-  const y = (e.clientY - rect.top) * BASE_H_SCHEM / rect.height;
+// ---------- Correct Click/Touch Mapping ----------
+function getRelativeCoords(event, canvas, baseW, baseH) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = event.clientX ?? event.touches[0].clientX;
+  const clientY = event.clientY ?? event.touches[0].clientY;
+  const x = (clientX - rect.left) * (baseW / rect.width);
+  const y = (clientY - rect.top) * (baseH / rect.height);
+  return { x, y };
+}
+
+function handleInput(event) {
+  const { x, y } = getRelativeCoords(event, schematic, BASE_W_SCHEM, BASE_H_SCHEM);
   if (x >= 20 && x <= 60 && y >= 50 && y <= 90) D = D ? 0 : 1;
   if (x >= 20 && x <= 60 && y >= 110 && y <= 150) enable = enable ? 0 : 1;
   updateLatch();
-});
+  event.preventDefault?.();
+}
+
+schematic.addEventListener("click", handleInput);
+schematic.addEventListener("touchstart", handleInput, { passive: false });
 
 // ---------- waveforms ----------
 function drawWaveforms() {
@@ -195,6 +207,12 @@ function tick() {
   drawWaveforms();
   requestAnimationFrame(tick);
 }
+
+// redraw on resize (important in iframe!)
+window.addEventListener("resize", () => {
+  drawSchematic();
+  drawWaveforms();
+});
 
 updateLatch();
 drawWaveforms();
