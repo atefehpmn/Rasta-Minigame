@@ -7,7 +7,7 @@
     body {
       background: #fff;  /* white background */
       color: black;
-      font-family: Arial, sans-serif;
+      font-family: Tahoma, "Vazirmatn", "Sahel", sans-serif;
       display: flex;
       flex-direction: row;
       gap: 20px;
@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <canvas id="schematic" width="300" height="200"></canvas>
+  <canvas id="schematic" width="320" height="220"></canvas>
   <canvas id="waveform" width="600" height="200"></canvas>
 
 <script>
@@ -43,47 +43,47 @@ let signals = { enable: [], D: [], Q: [] };
 function drawSchematic() {
   sctx.clearRect(0, 0, schematic.width, schematic.height);
   sctx.lineWidth = 2;
-  sctx.font = "16px Arial";
+  sctx.font = "16px Tahoma";
 
-  // input D
+  // --- داده (D) ---
   sctx.strokeStyle = "black";
-  sctx.strokeRect(20, 30, 30, 30);
-  sctx.fillText("داده", 20, 25);
+  sctx.strokeRect(20, 40, 30, 30);
+  sctx.fillText("داده", 20, 30);
   sctx.fillStyle = D ? "limegreen" : "lightgray";
-  sctx.fillRect(20, 30, 30, 30);
+  sctx.fillRect(20, 40, 30, 30);
   sctx.fillStyle = "black";
-  sctx.fillText(D, 32, 52);
+  sctx.fillText(D, 32, 62);
 
-  // input Enable
+  // --- فعال‌ساز (Enable), placed just under داده ---
   sctx.strokeStyle = "black";
-  sctx.strokeRect(20, 100, 30, 30);
-  sctx.fillText("فعال‌ساز", 15, 150);
+  sctx.strokeRect(20, 90, 30, 30);
+  sctx.fillText("فعال‌ساز", 15, 135);
   sctx.fillStyle = enable ? "limegreen" : "lightgray";
-  sctx.fillRect(20, 100, 30, 30);
+  sctx.fillRect(20, 90, 30, 30);
   sctx.fillStyle = "black";
-  sctx.fillText(enable, 32, 122);
+  sctx.fillText(enable, 32, 112);
 
-  // latch box
+  // --- لچ box ---
   sctx.strokeStyle = "black";
   sctx.strokeRect(100, 60, 60, 60);
   sctx.fillText("دی لچ", 115, 95);
 
-  // output Q
+  // --- خروجی (Q), placed below ---
   sctx.strokeStyle = "blue";
-  sctx.strokeRect(200, 80, 30, 30);
+  sctx.strokeRect(200, 140, 30, 30);
   sctx.fillStyle = "black";
-  sctx.fillText(Q, 212, 102);
-  sctx.fillText("خروجی", 200, 70);
+  sctx.fillText(Q, 212, 162);
+  sctx.fillText("خروجی", 190, 135);
 
-  // wires (straight)
+  // --- Wires (straight, neat) ---
   sctx.strokeStyle = "green";
   sctx.beginPath();
-  // D wire
-  sctx.moveTo(50, 45); sctx.lineTo(100, 45); sctx.lineTo(100, 80);
-  // Enable wire
-  sctx.moveTo(50, 115); sctx.lineTo(100, 115); sctx.lineTo(100, 100);
-  // Q wire
-  sctx.moveTo(160, 95); sctx.lineTo(200, 95);
+  // داده wire
+  sctx.moveTo(50, 55); sctx.lineTo(100, 55); sctx.lineTo(100, 80);
+  // فعال‌ساز wire
+  sctx.moveTo(50, 105); sctx.lineTo(100, 105); sctx.lineTo(100, 100);
+  // خروجی wire
+  sctx.moveTo(160, 95); sctx.lineTo(160, 155); sctx.lineTo(200, 155);
   sctx.stroke();
 }
 
@@ -101,13 +101,13 @@ schematic.addEventListener("click", function(e) {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  // D box
-  if (x >= 20 && x <= 50 && y >= 30 && y <= 60) {
+  // داده box
+  if (x >= 20 && x <= 50 && y >= 40 && y <= 70) {
     D = D ? 0 : 1;
     updateLatch();
   }
-  // Enable box
-  if (x >= 20 && x <= 50 && y >= 100 && y <= 130) {
+  // فعال‌ساز box
+  if (x >= 20 && x <= 50 && y >= 90 && y <= 120) {
     enable = enable ? 0 : 1;
     updateLatch();
   }
@@ -118,13 +118,13 @@ function drawWaveforms() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "black";
-  ctx.font = "14px Arial";
-  ctx.fillText("فعال‌ساز", 10, 40);
-  ctx.fillText("داده", 10, 90);
+  ctx.font = "14px Tahoma";
+  ctx.fillText("داده", 10, 40);
+  ctx.fillText("فعال‌ساز", 10, 90);
   ctx.fillText("خروجی", 10, 140);
 
-  drawSignal(signals.enable, 40, "blue");
-  drawSignal(signals.D, 90, "red");
+  drawSignal(signals.D, 40, "red");
+  drawSignal(signals.enable, 90, "blue");
   drawSignal(signals.Q, 140, "green");
 }
 
