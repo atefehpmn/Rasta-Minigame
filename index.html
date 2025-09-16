@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>D Latch Simulator</title>
+  <title>شبیه‌ساز دی لچ</title>
   <style>
     body {
       background: #222;
@@ -13,18 +13,6 @@
       gap: 20px;
       padding: 20px;
     }
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    button {
-      padding: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 8px;
-      border: none;
-    }
     canvas {
       background: #fff;
       border: 2px solid black;
@@ -32,16 +20,7 @@
   </style>
 </head>
 <body>
-  <div class="controls">
-    <h2>D Latch Controls</h2>
-    <p><b>Enable (E):</b> <span id="enableVal">0</span></p>
-    <button onclick="toggleEnable()">Toggle Enable</button>
-    <p><b>D input:</b> <span id="dVal">0</span></p>
-    <button onclick="toggleD()">Toggle D</button>
-    <p><b>Latch Output (Q):</b> <span id="qVal">0</span></p>
-    <button onclick="stepClock()">Step Clock ➡️</button>
-  </div>
-
+  <canvas id="schematic" width="300" height="200"></canvas>
   <canvas id="waveform" width="600" height="200"></canvas>
 
 <script>
@@ -49,52 +28,99 @@ let enable = 0;
 let D = 0;
 let Q = 0;
 
-const enableVal = document.getElementById("enableVal");
-const dVal = document.getElementById("dVal");
-const qVal = document.getElementById("qVal");
+// schematic canvas
+const schematic = document.getElementById("schematic");
+const sctx = schematic.getContext("2d");
 
+// waveform canvas
 const canvas = document.getElementById("waveform");
 const ctx = canvas.getContext("2d");
 
-// waveform buffers
-let signals = {
-  enable: [],
-  D: [],
-  Q: []
-};
+// signal history
+let signals = { enable: [], D: [], Q: [] };
 
-// toggle functions
-function toggleEnable() {
-  enable = enable ? 0 : 1;
-  updateLatch();
-}
-function toggleD() {
-  D = D ? 0 : 1;
-  updateLatch();
+// draw schematic (D latch block + clickable inputs)
+function drawSchematic() {
+  sctx.clearRect(0, 0, schematic.width, schematic.height);
+  sctx.lineWidth = 2;
+  sctx.font = "16px Arial";
+
+  // input D
+  sctx.strokeStyle = "black";
+  sctx.strokeRect(20, 30, 30, 30);
+  sctx.fillText("داده", 10, 20);
+  sctx.fillStyle = D ? "limegreen" : "lightgray";
+  sctx.fillRect(20, 30, 30, 30);
+  sctx.fillStyle = "black";
+  sctx.fillText(D, 32, 52);
+
+  // input Enable
+  sctx.strokeRect(20, 100, 30, 30);
+  sctx.fillText("فعال‌ساز", 10, 150);
+  sctx.fillStyle = enable ? "limegreen" : "lightgray";
+  sctx.fillRect(20, 100, 30, 30);
+  sctx.fillStyle = "black";
+  sctx.fillText(enable, 32, 122);
+
+  // latch box
+  sctx.strokeStyle = "black";
+  sctx.strokeRect(100, 60, 60, 60);
+  sctx.fillText("دی لچ", 115, 95);
+
+  // output Q
+  sctx.strokeStyle = "blue";
+  sctx.strokeRect(200, 80, 30, 30);
+  sctx.fillStyle = "black";
+  sctx.fillText(Q, 212, 102);
+  sctx.fillText("خروجی", 200, 70);
+
+  // wires
+  sctx.strokeStyle = "green";
+  sctx.beginPath();
+  sctx.moveTo(50, 45); sctx.lineTo(100, 80); // D to latch
+  sctx.moveTo(50, 115); sctx.lineTo(100, 100); // Enable to latch
+  sctx.moveTo(160, 90); sctx.lineTo(200, 95); // Latch to Q
+  sctx.stroke();
 }
 
-// latch logic: transparent when Enable=1
+// latch logic
 function updateLatch() {
   if (enable === 1) {
     Q = D;
   }
-  enableVal.textContent = enable;
-  dVal.textContent = D;
-  qVal.textContent = Q;
+  drawSchematic();
 }
+
+// handle clicks on input boxes
+schematic.addEventListener("click", function(e) {
+  const rect = schematic.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // D box area
+  if (x >= 20 && x <= 50 && y >= 30 && y <= 60) {
+    D = D ? 0 : 1;
+    updateLatch();
+    stepClock();
+  }
+  // Enable box area
+  if (x >= 20 && x <= 50 && y >= 100 && y <= 130) {
+    enable = enable ? 0 : 1;
+    updateLatch();
+    stepClock();
+  }
+});
 
 // draw waveforms
 function drawWaveforms() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // labels
   ctx.fillStyle = "black";
   ctx.font = "14px Arial";
   ctx.fillText("Enable", 10, 40);
   ctx.fillText("D", 10, 90);
   ctx.fillText("Q", 10, 140);
 
-  // draw signals
   drawSignal(signals.enable, 40, "blue");
   drawSignal(signals.D, 90, "red");
   drawSignal(signals.Q, 140, "green");
@@ -116,27 +142,23 @@ function drawSignal(data, y, color) {
   ctx.stroke();
 }
 
-// step button logic
+// step clock: add one tick
 function stepClock() {
-  // apply latch logic before recording
   updateLatch();
-
-  // push current values
   signals.enable.push(enable);
   signals.D.push(D);
   signals.Q.push(Q);
 
-  // keep array within canvas width
   if (signals.enable.length > canvas.width) {
     signals.enable.shift();
     signals.D.shift();
     signals.Q.shift();
   }
-
   drawWaveforms();
 }
 
 updateLatch();
+drawSchematic();
 drawWaveforms();
 </script>
 </body>
