@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <canvas id="schematic" width="350" height="240"></canvas>
+  <canvas id="schematic" width="360" height="240"></canvas>
   <canvas id="waveform" width="600" height="200"></canvas>
 
 <script>
@@ -75,16 +75,26 @@ function drawSchematic() {
   sctx.fillText(Q, 252, 92);
   sctx.fillText("خروجی", 235, 60);
 
-  // --- Wires (straight) ---
+  // --- Wires ---
   sctx.strokeStyle = "green";
   sctx.beginPath();
   // داده wire
   sctx.moveTo(50, 65); sctx.lineTo(100, 65); // straight into latch
   // فعال‌ساز wire
-  sctx.moveTo(50, 115); sctx.lineTo(100, 115); // straight into latch
+  sctx.moveTo(50, 115); sctx.lineTo(95, 115); 
+  sctx.lineTo(100, 115); // connect into latch
   // خروجی wire
-  sctx.moveTo(200, 90); sctx.lineTo(240, 90); // straight from latch to Q
+  sctx.moveTo(200, 90); sctx.lineTo(240, 90); // latch to Q
   sctx.stroke();
+
+  // --- Draw small triangle arrow at Enable input ---
+  sctx.fillStyle = "black";
+  sctx.beginPath();
+  sctx.moveTo(95, 110);  // left point
+  sctx.lineTo(95, 120);  // bottom point
+  sctx.lineTo(100, 115); // right point (towards latch)
+  sctx.closePath();
+  sctx.fill();
 }
 
 // latch logic
