@@ -18,23 +18,21 @@
     }
     .canvas-container {
       flex: 1 1 100%;
-      max-width: 100%;
       display: flex;
       justify-content: center;
     }
     canvas {
       background: #fff;
-      width: 100%;      /* responsive scaling */
-      height: auto;
+      max-width: 100%;   /* responsive */
+      height: auto;      /* keep aspect ratio */
     }
     #waveform {
       border: 2px solid black;
-      max-width: 100%;
     }
     @media (min-width: 700px) {
       .canvas-container {
         flex: 1 1 auto;
-        max-width: 48%;
+        max-width: 48%;  /* side by side on wide screens */
       }
     }
   </style>
@@ -58,7 +56,6 @@ const sctx = schematic.getContext("2d");
 const canvas = document.getElementById("waveform");
 const ctx = canvas.getContext("2d");
 
-// signal history
 let signals = { enable: [], D: [], Q: [] };
 
 // schematic
@@ -107,13 +104,13 @@ function drawSchematic() {
   sctx.stroke();
 }
 
-// latch logic
+// latch
 function updateLatch() {
   if (enable === 1) Q = D;
   drawSchematic();
 }
 
-// input toggles
+// clicks
 schematic.addEventListener("click", function(e) {
   const rect = schematic.getBoundingClientRect();
   const scaleX = schematic.width / rect.width;
@@ -121,25 +118,20 @@ schematic.addEventListener("click", function(e) {
   const x = (e.clientX - rect.left) * scaleX;
   const y = (e.clientY - rect.top) * scaleY;
 
-  if (x >= 20 && x <= 60 && y >= 50 && y <= 90) { // داده
-    D = D ? 0 : 1;
-    updateLatch();
-  }
-  if (x >= 20 && x <= 60 && y >= 110 && y <= 150) { // فعال‌ساز
-    enable = enable ? 0 : 1;
-    updateLatch();
-  }
+  if (x >= 20 && x <= 60 && y >= 50 && y <= 90) { D = D ? 0 : 1; updateLatch(); }
+  if (x >= 20 && x <= 60 && y >= 110 && y <= 150) { enable = enable ? 0 : 1; updateLatch(); }
 });
 
-// waveform
+// waveforms
 function drawWaveforms() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "black";
   ctx.font = "18px Vazirmatn";
 
-  ctx.fillText("داده", 10, 55);
-  ctx.fillText("فعال‌ساز", 10, 105);
-  ctx.fillText("خروجی", 10, 155);
+  // labels lower so signals don’t overlap
+  ctx.fillText("داده", 10, 65);
+  ctx.fillText("فعال‌ساز", 10, 115);
+  ctx.fillText("خروجی", 10, 165);
 
   drawSignal(signals.D, 40, "red");
   drawSignal(signals.enable, 90, "blue");
