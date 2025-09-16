@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #fff;  /* white background */
+      background: #fff;
       color: black;
       font-family: "Vazirmatn", sans-serif;
       display: flex;
@@ -19,7 +19,7 @@
       background: #fff;
     }
     #waveform {
-      border: 2px solid black; /* keep border only for waveform */
+      border: 2px solid black; /* only waveform has border */
     }
   </style>
 </head>
@@ -43,10 +43,10 @@ const ctx = canvas.getContext("2d");
 // signal history arrays
 let signals = { enable: [], D: [], Q: [] };
 
-// draw schematic (D latch block + clickable inputs)
+// draw schematic
 function drawSchematic() {
   sctx.clearRect(0, 0, schematic.width, schematic.height);
-  sctx.lineWidth = 3; // thicker lines
+  sctx.lineWidth = 3;
   sctx.font = "18px Vazirmatn";
 
   // --- داده (D) ---
@@ -67,28 +67,25 @@ function drawSchematic() {
   sctx.fillStyle = "black";
   sctx.fillText(enable, 35, 137);
 
-  // --- لچ box (bigger) ---
+  // --- لچ box ---
   sctx.strokeStyle = "black";
-  sctx.strokeRect(100, 40, 120, 120);   // bigger square
+  sctx.strokeRect(100, 40, 120, 120);
   sctx.fillText("دی لچ", 140, 100);
 
-  // --- خروجی (Q), moved up ---
+  // --- خروجی (Q) ---
   sctx.strokeStyle = "blue";
   sctx.strokeRect(250, 80, 40, 40);
   sctx.fillStyle = "black";
   sctx.fillText(Q, 265, 107);
   sctx.fillText("خروجی", 240, 70);
 
-  // --- Wires (straight, thick) ---
+  // --- Wires ---
   sctx.strokeStyle = "green";
   sctx.lineWidth = 3;
   sctx.beginPath();
-  // داده wire
-  sctx.moveTo(60, 70); sctx.lineTo(100, 70);
-  // فعال‌ساز wire
-  sctx.moveTo(60, 130); sctx.lineTo(100, 130);
-  // خروجی wire
-  sctx.moveTo(220, 100); sctx.lineTo(250, 100);
+  sctx.moveTo(60, 70); sctx.lineTo(100, 70);  // داده
+  sctx.moveTo(60, 130); sctx.lineTo(100, 130); // فعال‌ساز
+  sctx.moveTo(220, 100); sctx.lineTo(250, 100); // خروجی
   sctx.stroke();
 }
 
@@ -106,13 +103,11 @@ schematic.addEventListener("click", function(e) {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  // داده box
-  if (x >= 20 && x <= 60 && y >= 50 && y <= 90) {
+  if (x >= 20 && x <= 60 && y >= 50 && y <= 90) { // داده
     D = D ? 0 : 1;
     updateLatch();
   }
-  // فعال‌ساز box
-  if (x >= 20 && x <= 60 && y >= 110 && y <= 150) {
+  if (x >= 20 && x <= 60 && y >= 110 && y <= 150) { // فعال‌ساز
     enable = enable ? 0 : 1;
     updateLatch();
   }
@@ -123,7 +118,7 @@ function drawWaveforms() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "black";
-  ctx.font = "16px Vazirmatn bold";
+  ctx.font = "18px Vazirmatn";  // same as schematic
   ctx.fillText("داده", 10, 40);
   ctx.fillText("فعال‌ساز", 10, 90);
   ctx.fillText("خروجی", 10, 140);
@@ -135,7 +130,7 @@ function drawWaveforms() {
 
 function drawSignal(data, y, color) {
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5; // thicker waveform lines
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   for (let i = 0; i < data.length; i++) {
     let x = i;
@@ -150,16 +145,13 @@ function drawSignal(data, y, color) {
   ctx.stroke();
 }
 
-// live loop (smooth timing diagram)
+// live loop
 function tick() {
   updateLatch();
-
-  // push current values
   signals.enable.push(enable);
   signals.D.push(D);
   signals.Q.push(Q);
 
-  // limit buffer size
   if (signals.enable.length > canvas.width) {
     signals.enable.shift();
     signals.D.shift();
