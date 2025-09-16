@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <canvas id="schematic" width="320" height="220"></canvas>
+  <canvas id="schematic" width="350" height="240"></canvas>
   <canvas id="waveform" width="600" height="200"></canvas>
 
 <script>
@@ -47,43 +47,43 @@ function drawSchematic() {
 
   // --- داده (D) ---
   sctx.strokeStyle = "black";
-  sctx.strokeRect(20, 40, 30, 30);
-  sctx.fillText("داده", 20, 30);
+  sctx.strokeRect(20, 50, 30, 30);
+  sctx.fillText("داده", 20, 40);
   sctx.fillStyle = D ? "limegreen" : "lightgray";
-  sctx.fillRect(20, 40, 30, 30);
+  sctx.fillRect(20, 50, 30, 30);
   sctx.fillStyle = "black";
-  sctx.fillText(D, 32, 62);
+  sctx.fillText(D, 32, 72);
 
-  // --- فعال‌ساز (Enable), placed just under داده ---
+  // --- فعال‌ساز (Enable) ---
   sctx.strokeStyle = "black";
-  sctx.strokeRect(20, 90, 30, 30);
-  sctx.fillText("فعال‌ساز", 15, 135);
+  sctx.strokeRect(20, 100, 30, 30);
+  sctx.fillText("فعال‌ساز", 15, 145);
   sctx.fillStyle = enable ? "limegreen" : "lightgray";
-  sctx.fillRect(20, 90, 30, 30);
+  sctx.fillRect(20, 100, 30, 30);
   sctx.fillStyle = "black";
-  sctx.fillText(enable, 32, 112);
+  sctx.fillText(enable, 32, 122);
 
-  // --- لچ box ---
+  // --- لچ box (bigger) ---
   sctx.strokeStyle = "black";
-  sctx.strokeRect(100, 60, 60, 60);
-  sctx.fillText("دی لچ", 115, 95);
+  sctx.strokeRect(100, 40, 100, 100);   // bigger square
+  sctx.fillText("دی لچ", 130, 90);
 
-  // --- خروجی (Q), placed below ---
+  // --- خروجی (Q), moved up ---
   sctx.strokeStyle = "blue";
-  sctx.strokeRect(200, 140, 30, 30);
+  sctx.strokeRect(240, 70, 30, 30);
   sctx.fillStyle = "black";
-  sctx.fillText(Q, 212, 162);
-  sctx.fillText("خروجی", 190, 135);
+  sctx.fillText(Q, 252, 92);
+  sctx.fillText("خروجی", 235, 60);
 
-  // --- Wires (straight, neat) ---
+  // --- Wires (straight) ---
   sctx.strokeStyle = "green";
   sctx.beginPath();
   // داده wire
-  sctx.moveTo(50, 55); sctx.lineTo(100, 55); sctx.lineTo(100, 80);
+  sctx.moveTo(50, 65); sctx.lineTo(100, 65); // straight into latch
   // فعال‌ساز wire
-  sctx.moveTo(50, 105); sctx.lineTo(100, 105); sctx.lineTo(100, 100);
+  sctx.moveTo(50, 115); sctx.lineTo(100, 115); // straight into latch
   // خروجی wire
-  sctx.moveTo(160, 95); sctx.lineTo(160, 155); sctx.lineTo(200, 155);
+  sctx.moveTo(200, 90); sctx.lineTo(240, 90); // straight from latch to Q
   sctx.stroke();
 }
 
@@ -102,12 +102,12 @@ schematic.addEventListener("click", function(e) {
   const y = e.clientY - rect.top;
 
   // داده box
-  if (x >= 20 && x <= 50 && y >= 40 && y <= 70) {
+  if (x >= 20 && x <= 50 && y >= 50 && y <= 80) {
     D = D ? 0 : 1;
     updateLatch();
   }
   // فعال‌ساز box
-  if (x >= 20 && x <= 50 && y >= 90 && y <= 120) {
+  if (x >= 20 && x <= 50 && y >= 100 && y <= 130) {
     enable = enable ? 0 : 1;
     updateLatch();
   }
