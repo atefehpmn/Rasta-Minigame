@@ -36,7 +36,7 @@ const sctx = schematic.getContext("2d");
 const canvas = document.getElementById("waveform");
 const ctx = canvas.getContext("2d");
 
-// signal history
+// signal history arrays
 let signals = { enable: [], D: [], Q: [] };
 
 // draw schematic (D latch block + clickable inputs)
@@ -91,23 +91,21 @@ function updateLatch() {
   drawSchematic();
 }
 
-// handle clicks on input boxes
+// handle clicks on inputs
 schematic.addEventListener("click", function(e) {
   const rect = schematic.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  // D box area
+  // D box
   if (x >= 20 && x <= 50 && y >= 30 && y <= 60) {
     D = D ? 0 : 1;
     updateLatch();
-    stepClock();
   }
-  // Enable box area
+  // Enable box
   if (x >= 20 && x <= 50 && y >= 100 && y <= 130) {
     enable = enable ? 0 : 1;
     updateLatch();
-    stepClock();
   }
 });
 
@@ -142,24 +140,28 @@ function drawSignal(data, y, color) {
   ctx.stroke();
 }
 
-// step clock: add one tick
-function stepClock() {
+// live loop (smooth timing diagram)
+function tick() {
   updateLatch();
+
+  // push current values
   signals.enable.push(enable);
   signals.D.push(D);
   signals.Q.push(Q);
 
+  // limit buffer size
   if (signals.enable.length > canvas.width) {
     signals.enable.shift();
     signals.D.shift();
     signals.Q.shift();
   }
+
   drawWaveforms();
+  requestAnimationFrame(tick);
 }
 
 updateLatch();
-drawSchematic();
-drawWaveforms();
+tick();
 </script>
 </body>
 </html>
