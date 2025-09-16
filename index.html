@@ -5,8 +5,8 @@
   <title>شبیه‌ساز دی لچ</title>
   <style>
     body {
-      background: #222;
-      color: white;
+      background: #fff;  /* white background */
+      color: black;
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: row;
@@ -48,15 +48,16 @@ function drawSchematic() {
   // input D
   sctx.strokeStyle = "black";
   sctx.strokeRect(20, 30, 30, 30);
-  sctx.fillText("داده", 10, 20);
+  sctx.fillText("داده", 20, 25);
   sctx.fillStyle = D ? "limegreen" : "lightgray";
   sctx.fillRect(20, 30, 30, 30);
   sctx.fillStyle = "black";
   sctx.fillText(D, 32, 52);
 
   // input Enable
+  sctx.strokeStyle = "black";
   sctx.strokeRect(20, 100, 30, 30);
-  sctx.fillText("فعال‌ساز", 10, 150);
+  sctx.fillText("فعال‌ساز", 15, 150);
   sctx.fillStyle = enable ? "limegreen" : "lightgray";
   sctx.fillRect(20, 100, 30, 30);
   sctx.fillStyle = "black";
@@ -74,12 +75,15 @@ function drawSchematic() {
   sctx.fillText(Q, 212, 102);
   sctx.fillText("خروجی", 200, 70);
 
-  // wires
+  // wires (straight)
   sctx.strokeStyle = "green";
   sctx.beginPath();
-  sctx.moveTo(50, 45); sctx.lineTo(100, 80); // D to latch
-  sctx.moveTo(50, 115); sctx.lineTo(100, 100); // Enable to latch
-  sctx.moveTo(160, 90); sctx.lineTo(200, 95); // Latch to Q
+  // D wire
+  sctx.moveTo(50, 45); sctx.lineTo(100, 45); sctx.lineTo(100, 80);
+  // Enable wire
+  sctx.moveTo(50, 115); sctx.lineTo(100, 115); sctx.lineTo(100, 100);
+  // Q wire
+  sctx.moveTo(160, 95); sctx.lineTo(200, 95);
   sctx.stroke();
 }
 
@@ -115,9 +119,9 @@ function drawWaveforms() {
 
   ctx.fillStyle = "black";
   ctx.font = "14px Arial";
-  ctx.fillText("Enable", 10, 40);
-  ctx.fillText("D", 10, 90);
-  ctx.fillText("Q", 10, 140);
+  ctx.fillText("فعال‌ساز", 10, 40);
+  ctx.fillText("داده", 10, 90);
+  ctx.fillText("خروجی", 10, 140);
 
   drawSignal(signals.enable, 40, "blue");
   drawSignal(signals.D, 90, "red");
