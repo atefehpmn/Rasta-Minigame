@@ -23,8 +23,8 @@
     }
     canvas {
       background: #fff;
-      max-width: 100%;   /* responsive */
-      height: auto;      /* keep aspect ratio */
+      width: 100%;       /* scales to container */
+      height: auto;      /* keeps proportions */
     }
     #waveform {
       border: 2px solid black;
@@ -46,19 +46,16 @@
   </div>
 
 <script>
-let enable = 0;
-let D = 0;
-let Q = 0;
+let enable = 0, D = 0, Q = 0;
 
 const schematic = document.getElementById("schematic");
 const sctx = schematic.getContext("2d");
-
-const canvas = document.getElementById("waveform");
-const ctx = canvas.getContext("2d");
+const waveform = document.getElementById("waveform");
+const ctx = waveform.getContext("2d");
 
 let signals = { enable: [], D: [], Q: [] };
 
-// schematic
+// === Draw schematic ===
 function drawSchematic() {
   sctx.clearRect(0, 0, schematic.width, schematic.height);
   sctx.lineWidth = 3;
@@ -82,7 +79,7 @@ function drawSchematic() {
   sctx.fillStyle = "black";
   sctx.fillText(enable, 35, 137);
 
-  // لچ box
+  // لچ
   sctx.strokeStyle = "black";
   sctx.strokeRect(100, 40, 120, 120);
   sctx.fillText("دی لچ", 140, 100);
@@ -96,21 +93,20 @@ function drawSchematic() {
 
   // wires
   sctx.strokeStyle = "green";
-  sctx.lineWidth = 3;
   sctx.beginPath();
-  sctx.moveTo(60, 70); sctx.lineTo(100, 70);
-  sctx.moveTo(60, 130); sctx.lineTo(100, 130);
-  sctx.moveTo(220, 100); sctx.lineTo(250, 100);
+  sctx.moveTo(60, 70); sctx.lineTo(100, 70);   // داده
+  sctx.moveTo(60, 130); sctx.lineTo(100, 130); // فعال‌ساز
+  sctx.moveTo(220, 100); sctx.lineTo(250, 100);// خروجی
   sctx.stroke();
 }
 
-// latch
+// === Latch logic ===
 function updateLatch() {
   if (enable === 1) Q = D;
   drawSchematic();
 }
 
-// clicks
+// === Input clicks with scaling ===
 schematic.addEventListener("click", function(e) {
   const rect = schematic.getBoundingClientRect();
   const scaleX = schematic.width / rect.width;
@@ -122,13 +118,12 @@ schematic.addEventListener("click", function(e) {
   if (x >= 20 && x <= 60 && y >= 110 && y <= 150) { enable = enable ? 0 : 1; updateLatch(); }
 });
 
-// waveforms
+// === Draw waveform ===
 function drawWaveforms() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, waveform.width, waveform.height);
   ctx.fillStyle = "black";
   ctx.font = "18px Vazirmatn";
 
-  // labels lower so signals don’t overlap
   ctx.fillText("داده", 10, 65);
   ctx.fillText("فعال‌ساز", 10, 115);
   ctx.fillText("خروجی", 10, 165);
@@ -152,14 +147,14 @@ function drawSignal(data, y, color) {
   ctx.stroke();
 }
 
-// loop
+// === Loop ===
 function tick() {
   updateLatch();
   signals.enable.push(enable);
   signals.D.push(D);
   signals.Q.push(Q);
 
-  if (signals.enable.length > canvas.width) {
+  if (signals.enable.length > waveform.width) {
     signals.enable.shift();
     signals.D.shift();
     signals.Q.shift();
