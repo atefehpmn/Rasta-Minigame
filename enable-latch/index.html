@@ -1,63 +1,98 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <title>شبیه‌ساز دی لچ</title>
-  <!-- Load Vazirmatn font -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>شبیه‌ساز دی لچ (مقیاس‌پذیر)</title>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
+      margin: 0;
       background: #fff;
-      color: black;
       font-family: "Vazirmatn", sans-serif;
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding: 10px;
+      align-items: center;
       justify-content: center;
+      height: 100vh;
     }
-    .canvas-container {
-      flex: 1 1 100%;
+    .wrap {
       display: flex;
-      justify-content: center;
+      flex-direction: row;
+      gap: 20px;
+      max-width: 1100px;
+      width: 100%;
+      padding: 10px;
+    }
+    .card {
+      flex: 1 1 auto;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 8px;
+      font-size: 1rem;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    .card-body {
+      flex: 1;
+      padding: 0;
     }
     canvas {
-      background: #fff;
-      width: 100%;       /* scales to container */
-      height: auto;      /* keeps proportions */
-    }
-    #waveform {
-      border: 2px solid black;
-    }
-    @media (min-width: 700px) {
-      .canvas-container {
-        flex: 1 1 auto;
-        max-width: 48%;  /* side by side on wide screens */
-      }
+      display: block;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="canvas-container">
-    <canvas id="schematic" width="350" height="240"></canvas>
-  </div>
-  <div class="canvas-container">
-    <canvas id="waveform" width="600" height="200"></canvas>
+  <div class="wrap">
+    <div class="card">
+      <div class="card-head">نمای نماد دی‌لچ</div>
+      <div class="card-body"><canvas id="schematic"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head">نمودار زمانی</div>
+      <div class="card-body"><canvas id="waveform"></canvas></div>
+    </div>
   </div>
 
 <script>
 let enable = 0, D = 0, Q = 0;
-
-const schematic = document.getElementById("schematic");
-const sctx = schematic.getContext("2d");
-const waveform = document.getElementById("waveform");
-const ctx = waveform.getContext("2d");
+let schematic = document.getElementById("schematic");
+let sctx = schematic.getContext("2d");
+let waveform = document.getElementById("waveform");
+let wctx = waveform.getContext("2d");
 
 let signals = { enable: [], D: [], Q: [] };
 
-// === Draw schematic ===
+const BASE_W_SCHEM = 350, BASE_H_SCHEM = 240;
+const BASE_W_WAVE = 600, BASE_H_WAVE = 200;
+
+// helper: resize & scale into base coords
+function prepareContext(canvas, ctx, baseW, baseH) {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width;
+  canvas.height = r.height;
+  ctx.setTransform(1,0,0,1,0,0); // reset
+  const sx = r.width / baseW;
+  const sy = r.height / baseH;
+  const s = Math.min(sx, sy);
+  const ox = (r.width - baseW * s) / 2;
+  const oy = (r.height - baseH * s) / 2;
+  ctx.setTransform(s, 0, 0, s, ox, oy);
+}
+
+// ---------- schematic ----------
 function drawSchematic() {
-  sctx.clearRect(0, 0, schematic.width, schematic.height);
+  prepareContext(schematic, sctx, BASE_W_SCHEM, BASE_H_SCHEM);
+  sctx.clearRect(0, 0, BASE_W_SCHEM, BASE_H_SCHEM);
+
   sctx.lineWidth = 3;
   sctx.font = "18px Vazirmatn";
 
@@ -94,39 +129,38 @@ function drawSchematic() {
   // wires
   sctx.strokeStyle = "green";
   sctx.beginPath();
-  sctx.moveTo(60, 70); sctx.lineTo(100, 70);   // داده
-  sctx.moveTo(60, 130); sctx.lineTo(100, 130); // فعال‌ساز
-  sctx.moveTo(220, 100); sctx.lineTo(250, 100);// خروجی
+  sctx.moveTo(60, 70); sctx.lineTo(100, 70);
+  sctx.moveTo(60, 130); sctx.lineTo(100, 130);
+  sctx.moveTo(220, 100); sctx.lineTo(250, 100);
   sctx.stroke();
 }
 
-// === Latch logic ===
+// latch logic
 function updateLatch() {
   if (enable === 1) Q = D;
   drawSchematic();
 }
 
-// === Input clicks with scaling ===
+// click toggles
 schematic.addEventListener("click", function(e) {
   const rect = schematic.getBoundingClientRect();
-  const scaleX = schematic.width / rect.width;
-  const scaleY = schematic.height / rect.height;
-  const x = (e.clientX - rect.left) * scaleX;
-  const y = (e.clientY - rect.top) * scaleY;
-
-  if (x >= 20 && x <= 60 && y >= 50 && y <= 90) { D = D ? 0 : 1; updateLatch(); }
-  if (x >= 20 && x <= 60 && y >= 110 && y <= 150) { enable = enable ? 0 : 1; updateLatch(); }
+  const x = (e.clientX - rect.left) * BASE_W_SCHEM / rect.width;
+  const y = (e.clientY - rect.top) * BASE_H_SCHEM / rect.height;
+  if (x >= 20 && x <= 60 && y >= 50 && y <= 90) D = D ? 0 : 1;
+  if (x >= 20 && x <= 60 && y >= 110 && y <= 150) enable = enable ? 0 : 1;
+  updateLatch();
 });
 
-// === Draw waveform ===
+// ---------- waveforms ----------
 function drawWaveforms() {
-  ctx.clearRect(0, 0, waveform.width, waveform.height);
-  ctx.fillStyle = "black";
-  ctx.font = "18px Vazirmatn";
+  prepareContext(waveform, wctx, BASE_W_WAVE, BASE_H_WAVE);
+  wctx.clearRect(0, 0, BASE_W_WAVE, BASE_H_WAVE);
 
-  ctx.fillText("داده", 10, 65);
-  ctx.fillText("فعال‌ساز", 10, 115);
-  ctx.fillText("خروجی", 10, 165);
+  wctx.fillStyle = "black";
+  wctx.font = "18px Vazirmatn";
+  wctx.fillText("داده", 10, 55);
+  wctx.fillText("فعال‌ساز", 10, 105);
+  wctx.fillText("خروجی", 10, 155);
 
   drawSignal(signals.D, 40, "red");
   drawSignal(signals.enable, 90, "blue");
@@ -134,37 +168,36 @@ function drawWaveforms() {
 }
 
 function drawSignal(data, y, color) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
+  wctx.strokeStyle = color;
+  wctx.lineWidth = 2.5;
+  wctx.beginPath();
   for (let i = 0; i < data.length; i++) {
-    let x = i;
-    let val = data[i];
-    let level = val ? y - 20 : y;
-    if (i === 0) ctx.moveTo(x, level);
-    else ctx.lineTo(x, level);
+    const x = i;
+    const val = data[i];
+    const level = val ? y - 20 : y;
+    if (i === 0) wctx.moveTo(x, level);
+    else wctx.lineTo(x, level);
   }
-  ctx.stroke();
+  wctx.stroke();
 }
 
-// === Loop ===
+// ---------- loop ----------
 function tick() {
   updateLatch();
   signals.enable.push(enable);
   signals.D.push(D);
   signals.Q.push(Q);
-
-  if (signals.enable.length > waveform.width) {
+  if (signals.enable.length > BASE_W_WAVE) {
     signals.enable.shift();
     signals.D.shift();
     signals.Q.shift();
   }
-
   drawWaveforms();
   requestAnimationFrame(tick);
 }
 
 updateLatch();
+drawWaveforms();
 tick();
 </script>
 </body>
