@@ -39,6 +39,7 @@
     <p><b>D input:</b> <span id="dVal">0</span></p>
     <button onclick="toggleD()">Toggle D</button>
     <p><b>Latch Output (Q):</b> <span id="qVal">0</span></p>
+    <button onclick="stepClock()">Step Clock ➡️</button>
   </div>
 
   <canvas id="waveform" width="600" height="200"></canvas>
@@ -61,7 +62,6 @@ let signals = {
   D: [],
   Q: []
 };
-let t = 0;
 
 // toggle functions
 function toggleEnable() {
@@ -73,7 +73,7 @@ function toggleD() {
   updateLatch();
 }
 
-// update latch logic
+// latch logic: transparent when Enable=1
 function updateLatch() {
   if (enable === 1) {
     Q = D;
@@ -87,14 +87,14 @@ function updateLatch() {
 function drawWaveforms() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // draw labels
+  // labels
   ctx.fillStyle = "black";
   ctx.font = "14px Arial";
   ctx.fillText("Enable", 10, 40);
   ctx.fillText("D", 10, 90);
   ctx.fillText("Q", 10, 140);
 
-  // draw horizontal baselines
+  // draw signals
   drawSignal(signals.enable, 40, "blue");
   drawSignal(signals.D, 90, "red");
   drawSignal(signals.Q, 140, "green");
@@ -116,14 +116,17 @@ function drawSignal(data, y, color) {
   ctx.stroke();
 }
 
-// simulation tick
-function tick() {
-  // record current values
+// step button logic
+function stepClock() {
+  // apply latch logic before recording
+  updateLatch();
+
+  // push current values
   signals.enable.push(enable);
   signals.D.push(D);
   signals.Q.push(Q);
 
-  // keep array within width
+  // keep array within canvas width
   if (signals.enable.length > canvas.width) {
     signals.enable.shift();
     signals.D.shift();
@@ -131,12 +134,10 @@ function tick() {
   }
 
   drawWaveforms();
-  t++;
-  requestAnimationFrame(tick);
 }
 
 updateLatch();
-tick();
+drawWaveforms();
 </script>
 </body>
 </html>
