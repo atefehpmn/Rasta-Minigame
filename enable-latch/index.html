@@ -11,45 +11,79 @@
       color: black;
       font-family: "Vazirmatn", sans-serif;
       display: flex;
-      flex-direction: row;
+      flex-wrap: wrap;   /* allow stacking on mobile */
       gap: 20px;
-      padding: 20px;
+      padding: 10px;
+      justify-content: center;
+    }
+    .canvas-container {
+      flex: 1 1 100%;
+      max-width: 100%;
+      display: flex;
+      justify-content: center;
     }
     canvas {
       background: #fff;
+      width: 100%;       /* responsive */
+      height: auto;
     }
     #waveform {
-      border: 2px solid black; /* only waveform has border */
+      border: 2px solid black;
+      max-width: 100%;
+    }
+    @media (min-width: 700px) {
+      .canvas-container {
+        flex: 1 1 auto;
+        max-width: 48%;  /* side by side on desktop */
+      }
     }
   </style>
 </head>
 <body>
-  <canvas id="schematic" width="350" height="240"></canvas>
-  <canvas id="waveform" width="600" height="200"></canvas>
+  <div class="canvas-container">
+    <canvas id="schematic"></canvas>
+  </div>
+  <div class="canvas-container">
+    <canvas id="waveform"></canvas>
+  </div>
 
 <script>
 let enable = 0;
 let D = 0;
 let Q = 0;
 
-// schematic canvas
 const schematic = document.getElementById("schematic");
 const sctx = schematic.getContext("2d");
 
-// waveform canvas
 const canvas = document.getElementById("waveform");
 const ctx = canvas.getContext("2d");
 
-// signal history arrays
 let signals = { enable: [], D: [], Q: [] };
 
-// draw schematic
+// Resize canvases dynamically for screen size
+function resizeCanvases() {
+  const ratio = window.devicePixelRatio || 1;
+
+  // schematic
+  schematic.width = schematic.clientWidth * ratio;
+  schematic.height = 240 * ratio; // fixed height
+  sctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+  // waveform
+  canvas.width = canvas.clientWidth * ratio;
+  canvas.height = 200 * ratio; // fixed height
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+window.addEventListener("resize", resizeCanvases);
+resizeCanvases();
+
+// schematic drawing
 function drawSchematic() {
   sctx.clearRect(0, 0, schematic.width, schematic.height);
   sctx.lineWidth = 3;
   sctx.font = "18px Vazirmatn";
 
-  // داده (D)
+  // داده
   sctx.strokeStyle = "black";
   sctx.strokeRect(20, 50, 40, 40);
   sctx.fillText("داده", 20, 40);
@@ -58,7 +92,7 @@ function drawSchematic() {
   sctx.fillStyle = "black";
   sctx.fillText(D, 35, 77);
 
-  // فعال‌ساز (Enable)
+  // فعال‌ساز
   sctx.strokeStyle = "black";
   sctx.strokeRect(20, 110, 40, 40);
   sctx.fillText("فعال‌ساز", 15, 170);
@@ -67,37 +101,34 @@ function drawSchematic() {
   sctx.fillStyle = "black";
   sctx.fillText(enable, 35, 137);
 
-  // لچ box
+  // لچ
   sctx.strokeStyle = "black";
   sctx.strokeRect(100, 40, 120, 120);
   sctx.fillText("دی لچ", 140, 100);
 
-  // خروجی (Q)
+  // خروجی
   sctx.strokeStyle = "blue";
   sctx.strokeRect(250, 80, 40, 40);
   sctx.fillStyle = "black";
   sctx.fillText(Q, 265, 107);
   sctx.fillText("خروجی", 240, 70);
 
-  // Wires
+  // wires
   sctx.strokeStyle = "green";
   sctx.lineWidth = 3;
   sctx.beginPath();
-  sctx.moveTo(60, 70); sctx.lineTo(100, 70);  // داده
-  sctx.moveTo(60, 130); sctx.lineTo(100, 130); // فعال‌ساز
-  sctx.moveTo(220, 100); sctx.lineTo(250, 100); // خروجی
+  sctx.moveTo(60, 70); sctx.lineTo(100, 70);
+  sctx.moveTo(60, 130); sctx.lineTo(100, 130);
+  sctx.moveTo(220, 100); sctx.lineTo(250, 100);
   sctx.stroke();
 }
 
-// latch logic
 function updateLatch() {
-  if (enable === 1) {
-    Q = D;
-  }
+  if (enable === 1) Q = D;
   drawSchematic();
 }
 
-// handle clicks on inputs
+// clickable inputs (scaled for touch)
 schematic.addEventListener("click", function(e) {
   const rect = schematic.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -113,14 +144,12 @@ schematic.addEventListener("click", function(e) {
   }
 });
 
-// draw waveforms
+// waveform
 function drawWaveforms() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   ctx.fillStyle = "black";
   ctx.font = "18px Vazirmatn";
 
-  // ↓ Move labels slightly down
   ctx.fillText("داده", 10, 55);
   ctx.fillText("فعال‌ساز", 10, 105);
   ctx.fillText("خروجی", 10, 155);
@@ -138,16 +167,13 @@ function drawSignal(data, y, color) {
     let x = i;
     let val = data[i];
     let level = val ? y - 20 : y;
-    if (i === 0) {
-      ctx.moveTo(x, level);
-    } else {
-      ctx.lineTo(x, level);
-    }
+    if (i === 0) ctx.moveTo(x, level);
+    else ctx.lineTo(x, level);
   }
   ctx.stroke();
 }
 
-// live loop
+// animation loop
 function tick() {
   updateLatch();
   signals.enable.push(enable);
