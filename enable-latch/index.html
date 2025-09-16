@@ -11,7 +11,7 @@
       color: black;
       font-family: "Vazirmatn", sans-serif;
       display: flex;
-      flex-wrap: wrap;   /* allow stacking on mobile */
+      flex-wrap: wrap;
       gap: 20px;
       padding: 10px;
       justify-content: center;
@@ -24,7 +24,7 @@
     }
     canvas {
       background: #fff;
-      width: 100%;       /* responsive */
+      width: 100%;      /* responsive scaling */
       height: auto;
     }
     #waveform {
@@ -34,17 +34,17 @@
     @media (min-width: 700px) {
       .canvas-container {
         flex: 1 1 auto;
-        max-width: 48%;  /* side by side on desktop */
+        max-width: 48%;
       }
     }
   </style>
 </head>
 <body>
   <div class="canvas-container">
-    <canvas id="schematic"></canvas>
+    <canvas id="schematic" width="350" height="240"></canvas>
   </div>
   <div class="canvas-container">
-    <canvas id="waveform"></canvas>
+    <canvas id="waveform" width="600" height="200"></canvas>
   </div>
 
 <script>
@@ -58,26 +58,10 @@ const sctx = schematic.getContext("2d");
 const canvas = document.getElementById("waveform");
 const ctx = canvas.getContext("2d");
 
+// signal history
 let signals = { enable: [], D: [], Q: [] };
 
-// Resize canvases dynamically for screen size
-function resizeCanvases() {
-  const ratio = window.devicePixelRatio || 1;
-
-  // schematic
-  schematic.width = schematic.clientWidth * ratio;
-  schematic.height = 240 * ratio; // fixed height
-  sctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-  // waveform
-  canvas.width = canvas.clientWidth * ratio;
-  canvas.height = 200 * ratio; // fixed height
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-}
-window.addEventListener("resize", resizeCanvases);
-resizeCanvases();
-
-// schematic drawing
+// schematic
 function drawSchematic() {
   sctx.clearRect(0, 0, schematic.width, schematic.height);
   sctx.lineWidth = 3;
@@ -101,7 +85,7 @@ function drawSchematic() {
   sctx.fillStyle = "black";
   sctx.fillText(enable, 35, 137);
 
-  // لچ
+  // لچ box
   sctx.strokeStyle = "black";
   sctx.strokeRect(100, 40, 120, 120);
   sctx.fillText("دی لچ", 140, 100);
@@ -123,16 +107,19 @@ function drawSchematic() {
   sctx.stroke();
 }
 
+// latch logic
 function updateLatch() {
   if (enable === 1) Q = D;
   drawSchematic();
 }
 
-// clickable inputs (scaled for touch)
+// input toggles
 schematic.addEventListener("click", function(e) {
   const rect = schematic.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const scaleX = schematic.width / rect.width;
+  const scaleY = schematic.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
 
   if (x >= 20 && x <= 60 && y >= 50 && y <= 90) { // داده
     D = D ? 0 : 1;
@@ -173,7 +160,7 @@ function drawSignal(data, y, color) {
   ctx.stroke();
 }
 
-// animation loop
+// loop
 function tick() {
   updateLatch();
   signals.enable.push(enable);
