@@ -78,8 +78,11 @@ const hitboxes = {
   enable: {x:20, y:110, w:40, h:40}
 };
 
+// store scale + offsets so both drawing and input use same transform
+let schematicTransform = {s:1, ox:0, oy:0};
+
 // ---------- helpers for scaling ----------
-function setupContext(canvas, baseW, baseH) {
+function setupContext(canvas, baseW, baseH, isSchematic=false) {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
   canvas.width = rect.width * dpr;
@@ -97,28 +100,32 @@ function setupContext(canvas, baseW, baseH) {
   ctx.translate(ox, oy);
   ctx.scale(s, s);
 
+  if (isSchematic) {
+    schematicTransform = {s, ox, oy, rect};
+  }
+
   return ctx;
 }
 
-function getRelativeCoords(event, canvas, baseW, baseH) {
-  const rect = canvas.getBoundingClientRect();
-  const clientX = event.clientX ?? event.touches[0].clientX;
-  const clientY = event.clientY ?? event.touches[0].clientY;
+function getRelativeCoords(event, transform, baseW, baseH) {
+  const rect = transform.rect;
+  let clientX, clientY;
+  if (event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  } else {
+    clientX = event.clientX;
+    clientY = event.clientY;
+  }
 
-  const sx = rect.width / baseW;
-  const sy = rect.height / baseH;
-  const s = Math.min(sx, sy);
-  const ox = (rect.width - baseW * s) / 2;
-  const oy = (rect.height - baseH * s) / 2;
-
-  const x = (clientX - rect.left - ox) / s;
-  const y = (clientY - rect.top - oy) / s;
-  return { x, y };
+  const x = (clientX - rect.left - transform.ox) / transform.s;
+  const y = (clientY - rect.top - transform.oy) / transform.s;
+  return {x, y};
 }
 
 // ---------- schematic ----------
 function drawSchematic() {
-  const ctx = setupContext(schematic, BASE_W_SCHEM, BASE_H_SCHEM);
+  const ctx = setupContext(schematic, BASE_W_SCHEM, BASE_H_SCHEM, true);
   ctx.clearRect(0, 0, BASE_W_SCHEM, BASE_H_SCHEM);
   ctx.lineWidth = 2;
   ctx.font = "18px Vazirmatn";
@@ -168,7 +175,8 @@ function updateLatch() {
 }
 
 function handleInput(event) {
-  const { x, y } = getRelativeCoords(event, schematic, BASE_W_SCHEM, BASE_H_SCHEM);
+  const {x, y} = getRelativeCoords(event, schematicTransform, BASE_W_SCHEM, BASE_H_SCHEM);
+
   if (x >= hitboxes.data.x && x <= hitboxes.data.x + hitboxes.data.w &&
       y >= hitboxes.data.y && y <= hitboxes.data.y + hitboxes.data.h) {
     D = D ? 0 : 1;
@@ -177,6 +185,7 @@ function handleInput(event) {
       y >= hitboxes.enable.y && y <= hitboxes.enable.y + hitboxes.enable.h) {
     enable = enable ? 0 : 1;
   }
+
   updateLatch();
   event.preventDefault?.();
 }
